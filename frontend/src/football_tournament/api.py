@@ -116,18 +116,42 @@ def create_match_scheduled(tournament_id: int, home_team_id: int, away_team_id: 
     res.raise_for_status()
     return res.json()
 
+
+
+
+
+
+
+
+
+
+
+
 def update_match_result(match_id: int, home_score: int, away_score: int):
-    """Envoie une requête PUT ou POST au backend pour mettre à jour le score du match."""
-    payload = {
-        "home_score": home_score,
-        "away_score": away_score
-    }
-    # Adaptez l'URL '/matches/{match_id}/score' selon la route exacte définie dans votre backend FastAPI
-    response = requests.put(
-        f"{BASE_URL}/matches/{match_id}/score",
-        json=payload,
-        headers=get_headers()
-    )
-    if response.status_code not in (200, 204):
-        raise Exception(f"HTTP {response.status_code}: {response.text}")
-    return response.json() if response.text else {}
+    import requests
+    base_url = globals().get('BASE_URL', 'http://localhost:8000').rstrip('/')
+    token = globals().get('API_TOKEN') or globals().get('API_KEY', '')
+    headers = {'X-API-Token': token} if token else {}
+    payload = {'home_score': home_score, 'away_score': away_score}
+    params = {'home_score': home_score, 'away_score': away_score}
+    
+    attempts = [
+        ('PUT', f'{base_url}/matches/{match_id}/score', payload, None),
+        ('PATCH', f'{base_url}/matches/{match_id}', payload, None),
+        ('PUT', f'{base_url}/matches/{match_id}/score', None, params),
+        ('PUT', f'{base_url}/matches/{match_id}', None, params),
+        ('POST', f'{base_url}/matches/{match_id}/score', payload, None),
+    ]
+    
+    last_res = None
+    for method, url, json_data, req_params in attempts:
+        res = requests.request(method, url, json=json_data, params=req_params, headers=headers)
+        if res.status_code < 400:
+            return res.json()
+        last_res = res
+        
+    if last_res is not None:
+        last_res.raise_for_status()
+
+def update_score(match_id: int, home_score: int, away_score: int):
+    return update_match_result(match_id, home_score, away_score)

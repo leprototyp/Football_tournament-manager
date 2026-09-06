@@ -26,7 +26,9 @@ def get_matches(db: Session = Depends(get_db)):
             "referee": referee,
             "tournament_id": m.tournament_id,
             "home_team_id": m.home_team_id,
-            "away_team_id": m.away_team_id
+            "away_team_id": m.away_team_id,
+            "home_score": getattr(m, "home_score", None),
+            "away_score": getattr(m, "away_score", None)
         })
     return res
 
@@ -52,3 +54,26 @@ def create_match(data: MatchSchedule, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_m)
     return {"message": "Match scheduled", "match_id": new_m.match_id}
+
+
+@router.put("/{match_id}/score")
+def update_match_score(match_id: int, payload: dict, db: Session = Depends(get_db)):
+    """Mise à jour des scores d'un match"""
+    match = db.query(models.Match).filter(models.Match.match_id == match_id).first()
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+
+    home_score = payload.get("home_score")
+    away_score = payload.get("away_score")
+
+    match.home_score = home_score
+    match.away_score = away_score
+    db.commit()
+    db.refresh(match)
+
+    return {
+        "match_id": match.match_id,
+        "home_score": match.home_score,
+        "away_score": match.away_score,
+        "status": "updated"
+    }

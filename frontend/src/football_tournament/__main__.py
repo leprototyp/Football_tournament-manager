@@ -96,15 +96,28 @@ class CreateTeamForm(tk.Toplevel):
 
 
 class ScheduleMatchForm(tk.Toplevel):
-    """Form to schedule a new match with Home Team, Away Team, and Referee"""
     def __init__(self, parent, on_success_callback):
         super().__init__(parent)
         self.title("Schedule Match")
-        self.geometry("400x420")
+        self.geometry("400x450")
         self.resizable(False, False)
         self.on_success_callback = on_success_callback
         self.transient(parent)
         self.grab_set()
+
+        self.teams_map = {}
+        team_names = []
+        try:
+            teams = api.get_teams()
+            for t in teams:
+                t_id = t.get("team_id")
+                t_name = t.get("name")
+                if t_id and t_name:
+                    display_str = str(t_name)
+                    self.teams_map[display_str] = t_id
+                    team_names.append(display_str)
+        except Exception as e:
+            messagebox.showerror("Error", "Could not load teams: " + str(e), parent=self)
 
         frame = ttk.Frame(self, padding="20")
         frame.pack(fill="both", expand=True)
@@ -119,13 +132,19 @@ class ScheduleMatchForm(tk.Toplevel):
         self.entry_date.insert(0, "2026-09-10")
         self.entry_date.pack(fill="x", pady=(0, 10))
 
-        ttk.Label(frame, text="Home Team ID:", font=("Helvetica", 10, "bold")).pack(anchor="w", pady=(0, 2))
-        self.entry_home = ttk.Entry(frame, width=40)
-        self.entry_home.pack(fill="x", pady=(0, 10))
+        ttk.Label(frame, text="Home Team:", font=("Helvetica", 10, "bold")).pack(anchor="w", pady=(0, 2))
+        self.combo_home = ttk.Combobox(frame, values=team_names, state="readonly", width=38)
+        self.combo_home.pack(fill="x", pady=(0, 10))
+        if team_names:
+            self.combo_home.current(0)
 
-        ttk.Label(frame, text="Away Team ID:", font=("Helvetica", 10, "bold")).pack(anchor="w", pady=(0, 2))
-        self.entry_away = ttk.Entry(frame, width=40)
-        self.entry_away.pack(fill="x", pady=(0, 10))
+        ttk.Label(frame, text="Away Team:", font=("Helvetica", 10, "bold")).pack(anchor="w", pady=(0, 2))
+        self.combo_away = ttk.Combobox(frame, values=team_names, state="readonly", width=38)
+        self.combo_away.pack(fill="x", pady=(0, 10))
+        if len(team_names) > 1:
+            self.combo_away.current(1)
+        elif team_names:
+            self.combo_away.current(0)
 
         ttk.Label(frame, text="Referee Name:", font=("Helvetica", 10, "bold")).pack(anchor="w", pady=(0, 2))
         self.entry_referee = ttk.Entry(frame, width=40)
@@ -139,21 +158,127 @@ class ScheduleMatchForm(tk.Toplevel):
     def submit(self):
         t_id = self.entry_t_id.get().strip()
         m_date = self.entry_date.get().strip()
-        home = self.entry_home.get().strip()
-        away = self.entry_away.get().strip()
+        home_sel = self.combo_home.get()
+        away_sel = self.combo_away.get()
         referee = self.entry_referee.get().strip()
 
-        if not t_id or not m_date or not home or not away or not referee:
+        if not t_id or not m_date or not home_sel or not away_sel or not referee:
             messagebox.showerror("Error", "All fields are required!", parent=self)
             return
 
+        home_id = self.teams_map.get(home_sel)
+        away_id = self.teams_map.get(away_sel)
+
+        if home_id == away_id:
+            messagebox.showerror("Error", "Home Team and Away Team must be different!", parent=self)
+            return
+
         try:
-            api.create_match_scheduled(int(t_id), int(home), int(away), m_date, referee)
+            api.create_match_scheduled(int(t_id), int(home_id), int(away_id), m_date, referee)
             messagebox.showinfo("Success", "Match scheduled successfully!", parent=self)
             self.on_success_callback()
             self.destroy()
         except Exception as e:
-            messagebox.showerror("API Error", f"Could not schedule match:\n{e}", parent=self)
+            messagebox.showerror("API Error", "Could not schedule match: " + str(e), parent=self)
+
+
+class UpdateScoreForm(tk.Toplevel):
+    def __init__(self, parent, match_id, home_team, away_team, on_success_callback):
+        super().__init__(parent)
+        self.title("Enter Match Result")
+        self.geometry("380x240")
+        self.resizable(False, False)
+        self.match_id = match_id
+        self.home_team = home_team
+        self.away_team = away_team
+        self.on_success_callback = on_success_callback
+        self.transient(parent)
+        self.grab_set()
+
+        frame = ttk.Frame(self, padding="20")
+        frame.pack(fill="both", expand=True)
+
+        # Match Title Header
+        title_text = f"Match #{match_id}: {home_team} vs {away_team}"
+        ttk.Label(frame, text=title_text, font=("Helvetica", 11, "bold")).pack(anchor="center", pady=(0, 20))
+
+        # Horizontal Layout for Home Score - Away Score
+        score_frame = ttk.Frame(frame)
+        score_frame.pack(anchor="center", pady=(0, 25))
+
+        # Home Team Block
+        home_box = ttk.Frame(score_frame)
+        home_box.pack(side="left", padx=15)
+        ttk.Label(home_box, text=home_team, font=("Helvetica", 10)).pack(anchor="center", pady=(0, 5))
+        self.entry_home = ttk.Entry(home_box, width=5, justify="center", font=("Helvetica", 10))
+        self.entry_home.pack(anchor="center")
+
+        # Dash Separator
+        ttk.Label(score_frame, text="-", font=("Helvetica", 12, "bold")).pack(side="left", padx=10)
+
+        # Away Team Block
+        away_box = ttk.Frame(score_frame)
+        away_box.pack(side="left", padx=15)
+        ttk.Label(away_box, text=away_team, font=("Helvetica", 10)).pack(anchor="center", pady=(0, 5))
+        self.entry_away = ttk.Entry(away_box, width=5, justify="center", font=("Helvetica", 10))
+        self.entry_away.pack(anchor="center")
+
+        # Buttons
+        btn_frame = ttk.Frame(frame)
+        btn_frame.pack(anchor="center")
+        ttk.Button(btn_frame, text="Cancel", command=self.destroy).pack(side="left", padx=10)
+        ttk.Button(btn_frame, text="Save Result", command=self.submit).pack(side="left", padx=10)
+
+    def submit(self):
+        h_score = self.entry_home.get().strip()
+        a_score = self.entry_away.get().strip()
+
+        if not h_score.isdigit() or not a_score.isdigit():
+            messagebox.showerror("Error", "Scores must be valid integers!", parent=self)
+            return
+
+        try:
+            api.update_score(self.match_id, int(h_score), int(a_score))
+            messagebox.showinfo("Success", "Score updated successfully!", parent=self)
+            self.on_success_callback()
+            self.destroy()
+        except Exception as e:
+            messagebox.showerror("API Error", "Could not update score: " + str(e), parent=self)
+
+
+        frame = ttk.Frame(self, padding="20")
+        frame.pack(fill="both", expand=True)
+
+        ttk.Label(frame, text=f"Match ID: {match_id}", font=("Helvetica", 10, "bold")).pack(anchor="w", pady=(0, 10))
+
+        ttk.Label(frame, text="Home Score:").pack(anchor="w", pady=(0, 2))
+        self.entry_home = ttk.Entry(frame, width=30)
+        self.entry_home.pack(fill="x", pady=(0, 10))
+
+        ttk.Label(frame, text="Away Score:").pack(anchor="w", pady=(0, 2))
+        self.entry_away = ttk.Entry(frame, width=30)
+        self.entry_away.pack(fill="x", pady=(0, 15))
+
+        btn_frame = ttk.Frame(frame)
+        btn_frame.pack(fill="x")
+        ttk.Button(btn_frame, text="Cancel", command=self.destroy).pack(side="left", expand=True, padx=5)
+        ttk.Button(btn_frame, text="Save Score", command=self.submit).pack(side="right", expand=True, padx=5)
+
+    def submit(self):
+        h_score = self.entry_home.get().strip()
+        a_score = self.entry_away.get().strip()
+
+        if not h_score.isdigit() or not a_score.isdigit():
+            messagebox.showerror("Error", "Scores must be valid integers!", parent=self)
+            return
+
+        try:
+            api.update_score(self.match_id, int(h_score), int(a_score))
+            messagebox.showinfo("Success", "Score updated successfully!", parent=self)
+            self.on_success_callback()
+            self.destroy()
+        except Exception as e:
+            messagebox.showerror("API Error", "Could not update score: " + str(e), parent=self)
 
 
 class TournamentApp(tk.Tk):
@@ -219,14 +344,17 @@ class TournamentApp(tk.Tk):
         self.tab_tournaments = ttk.Frame(self.notebook, padding="10")
         self.tab_teams = ttk.Frame(self.notebook, padding="10")
         self.tab_matches = ttk.Frame(self.notebook, padding="10")
+        self.tab_standings = ttk.Frame(self.notebook, padding="10")
 
         self.notebook.add(self.tab_tournaments, text="🏆 Tournaments")
         self.notebook.add(self.tab_teams, text="⚽ Teams")
         self.notebook.add(self.tab_matches, text="📅 Matches")
+        self.notebook.add(self.tab_standings, text="📊 Standings")
 
         self.setup_tournaments_tab()
         self.setup_teams_tab()
         self.setup_matches_tab()
+        self.setup_standings_tab()
 
         self.refresh_all()
 
@@ -258,16 +386,28 @@ class TournamentApp(tk.Tk):
         if self.is_organizer:
             top_bar = ttk.Frame(self.tab_matches)
             top_bar.pack(fill="x", pady=(0, 10))
-            ttk.Button(top_bar, text="+ Schedule Match", command=lambda: ScheduleMatchForm(self, self.refresh_all)).pack(side="left")
+            ttk.Button(top_bar, text="+ Schedule Match", command=lambda: ScheduleMatchForm(self, self.refresh_all)).pack(side="left", padx=(0, 5))
+            ttk.Button(top_bar, text="✏️ Update Score", command=self.open_update_score).pack(side="left")
 
-        # Column Score replaced by Referee
-        self.tree_matches = ttk.Treeview(self.tab_matches, columns=("ID", "Date", "Home", "Away", "Referee"), show="headings")
-        for col, h in [("ID", "ID"), ("Date", "Match Date"), ("Home", "Home Team"), ("Away", "Away Team"), ("Referee", "Referee")]:
+        self.tree_matches = ttk.Treeview(self.tab_matches, columns=("ID", "Date", "Home", "Score", "Away", "Referee"), show="headings")
+        for col, h in [("ID", "ID"), ("Date", "Match Date"), ("Home", "Home Team"), ("Score", "Score / Result"), ("Away", "Away Team"), ("Referee", "Referee")]:
             self.tree_matches.heading(col, text=h)
             self.tree_matches.column(col, anchor="center")
         self.tree_matches.pack(fill="both", expand=True)
 
+    def open_update_score(self):
+        selected = self.tree_matches.selection()
+        if not selected:
+            messagebox.showwarning("Warning", "Please select a match from the list first!")
+            return
+        item_values = self.tree_matches.item(selected[0])["values"]
+        match_id = item_values[0]
+        home_team = str(item_values[2])
+        away_team = str(item_values[4])
+        UpdateScoreForm(self, match_id, home_team, away_team, self.refresh_all)
+
     def refresh_all(self):
+        self.load_standings()
         # Load Tournaments
         for item in self.tree_tournaments.get_children():
             self.tree_tournaments.delete(item)
@@ -291,12 +431,155 @@ class TournamentApp(tk.Tk):
         for item in self.tree_matches.get_children():
             self.tree_matches.delete(item)
         try:
+            # Dictionnaire pour convertir ID -> Nom d'équipe
+            teams_dict = {}
+            try:
+                for t in api.get_teams():
+                    teams_dict[t.get("team_id")] = t.get("name")
+            except Exception:
+                pass
+
             for m in api.get_matches():
-                referee = m.get("referee", "N/A")
-                self.tree_matches.insert("", "end", values=(m.get("match_id"), m.get("match_date"), m.get("home_team_id"), m.get("away_team_id"), referee))
+                referee = m.get("referee") or "N/A"
+                h_score = m.get("home_score")
+                a_score = m.get("away_score")
+                
+                if h_score is not None and a_score is not None:
+                    score_str = f"{h_score} - {a_score}"
+                else:
+                    score_str = "-"
+
+                home_id = m.get("home_team_id")
+                away_id = m.get("away_team_id")
+
+                home_name = teams_dict.get(home_id, f"Team #{home_id}")
+                away_name = teams_dict.get(away_id, f"Team #{away_id}")
+
+                self.tree_matches.insert("", "end", values=(
+                    m.get("match_id"),
+                    m.get("match_date"),
+                    home_name,
+                    score_str,
+                    away_name,
+                    referee
+                ))
         except Exception:
             pass
 
+
+
+    def setup_standings_tab(self):
+        columns = ("Rank", "Team", "P", "W", "D", "L", "GF", "GA", "GD", "Pts")
+        self.tree_standings = ttk.Treeview(self.tab_standings, columns=columns, show="headings")
+        
+        headers = {
+            "Rank": "#",
+            "Team": "Team",
+            "P": "Played",
+            "W": "Won",
+            "D": "Drawn",
+            "L": "Lost",
+            "GF": "GF",
+            "GA": "GA",
+            "GD": "GD",
+            "Pts": "Points"
+        }
+        
+        col_widths = {
+            "Rank": 40,
+            "Team": 180,
+            "P": 60,
+            "W": 50,
+            "D": 50,
+            "L": 50,
+            "GF": 50,
+            "GA": 50,
+            "GD": 60,
+            "Pts": 70
+        }
+
+        for col in columns:
+            self.tree_standings.heading(col, text=headers[col])
+            self.tree_standings.column(col, anchor="center", width=col_widths[col])
+        
+        self.tree_standings.pack(fill="both", expand=True)
+
+    def load_standings(self):
+        for item in self.tree_standings.get_children():
+            self.tree_standings.delete(item)
+        
+        try:
+            teams = {int(t.get("team_id")): t.get("name") for t in api.get_teams() if t.get("team_id") is not None}
+            stats = {}
+            for t_id, t_name in teams.items():
+                stats[t_id] = {
+                    "name": t_name,
+                    "played": 0,
+                    "won": 0,
+                    "drawn": 0,
+                    "lost": 0,
+                    "gf": 0,
+                    "ga": 0,
+                    "gd": 0,
+                    "pts": 0
+                }
+
+            matches = api.get_matches()
+            for m in matches:
+                h_score = m.get("home_score")
+                a_score = m.get("away_score")
+                try:
+                    h_id = int(m.get("home_team_id"))
+                    a_id = int(m.get("away_team_id"))
+                except (TypeError, ValueError):
+                    continue
+
+                if h_score is not None and a_score is not None and h_id in stats and a_id in stats:
+                    stats[h_id]["played"] += 1
+                    stats[a_id]["played"] += 1
+                    stats[h_id]["gf"] += h_score
+                    stats[h_id]["ga"] += a_score
+                    stats[a_id]["gf"] += a_score
+                    stats[a_id]["ga"] += h_score
+
+                    if h_score > a_score:
+                        stats[h_id]["won"] += 1
+                        stats[h_id]["pts"] += 3
+                        stats[a_id]["lost"] += 1
+                    elif a_score > h_score:
+                        stats[a_id]["won"] += 1
+                        stats[a_id]["pts"] += 3
+                        stats[h_id]["lost"] += 1
+                    else:
+                        stats[h_id]["drawn"] += 1
+                        stats[a_id]["drawn"] += 1
+                        stats[h_id]["pts"] += 1
+                        stats[a_id]["pts"] += 1
+
+            for s in stats.values():
+                s["gd"] = s["gf"] - s["ga"]
+
+            sorted_teams = sorted(
+                stats.values(),
+                key=lambda x: (x["pts"], x["gd"], x["gf"]),
+                reverse=True
+            )
+
+            for idx, s in enumerate(sorted_teams, 1):
+                self.tree_standings.insert("", "end", values=(
+                    idx,
+                    s["name"],
+                    s["played"],
+                    s["won"],
+                    s["drawn"],
+                    s["lost"],
+                    s["gf"],
+                    s["ga"],
+                    f"{s['gd']:+d}" if s["gd"] != 0 else "0",
+                    s["pts"]
+                ))
+        except Exception as e:
+            print("Error loading standings:", e)
 
 if __name__ == "__main__":
     app = TournamentApp()

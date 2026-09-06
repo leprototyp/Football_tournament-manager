@@ -92,7 +92,14 @@ def update_match_result(match_id: int, home_score: int, away_score: int):
         last_res.raise_for_status()
 
 def update_score(match_id: int, home_score: int, away_score: int):
-    return update_match_result(match_id, home_score, away_score)
+    payload = {
+        "home_score": home_score,
+        "away_score": away_score
+    }
+    res = requests.put(f"{API_URL}/matches/{match_id}/score", json=payload, headers=get_headers())
+    res.raise_for_status()
+    return res.json()
+
 
 def get_standings(tournament_id: int):
     res = requests.get(f"{API_URL}/tournaments/{tournament_id}/ranking", headers=get_headers())

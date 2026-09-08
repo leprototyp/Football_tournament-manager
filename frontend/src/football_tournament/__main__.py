@@ -122,10 +122,21 @@ class ScheduleMatchForm(tk.Toplevel):
         frame = ttk.Frame(self, padding="20")
         frame.pack(fill="both", expand=True)
 
-        ttk.Label(frame, text="Tournament ID:", font=("Helvetica", 10, "bold")).pack(anchor="w", pady=(0, 2))
-        self.entry_t_id = ttk.Entry(frame, width=40)
-        self.entry_t_id.insert(0, "1")
-        self.entry_t_id.pack(fill="x", pady=(0, 10))
+        ttk.Label(frame, text="Tournament:", font=("Helvetica", 10, "bold")).pack(anchor="w", pady=(0, 2))
+        
+        try:
+            tournaments_list = api.get_tournaments() if hasattr(api, 'get_tournaments') else requests.get(f"{API_URL}/tournaments/", headers=api.get_headers()).json()
+        except Exception as e:
+            print('Erreur chargement tournois:', e)
+            tournaments_list = []
+            
+        self.tournament_dict = {t.get('name', 'Tournoi'): (t.get('tournament_id') or t.get('id')) for t in tournaments_list}
+        tournament_names = list(self.tournament_dict.keys())
+        
+        self.tournament_combobox = ttk.Combobox(frame, values=tournament_names, width=38, state="readonly")
+        self.tournament_combobox.pack(fill="x", pady=(0, 10))
+        if tournament_names:
+            self.tournament_combobox.current(0)
 
         ttk.Label(frame, text="Match Date (YYYY-MM-DD):", font=("Helvetica", 10, "bold")).pack(anchor="w", pady=(0, 2))
         self.entry_date = ttk.Entry(frame, width=40)
@@ -156,7 +167,7 @@ class ScheduleMatchForm(tk.Toplevel):
         ttk.Button(btn_frame, text="Schedule Match", command=self.submit).pack(side="right", expand=True, padx=5)
 
     def submit(self):
-        t_id = self.entry_t_id.get().strip()
+        t_id = str(self.tournament_dict.get(self.tournament_combobox.get(), ""))
         m_date = self.entry_date.get().strip()
         home_sel = self.combo_home.get()
         away_sel = self.combo_away.get()

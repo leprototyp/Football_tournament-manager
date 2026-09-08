@@ -57,6 +57,7 @@ class Match(Base):
     
     match_id = Column(Integer, Identity(start=1), primary_key=True)
     match_date = Column(Date, nullable=False)
+    referee = Column(String, nullable=True)
     home_score = Column(Integer, default=0)
     away_score = Column(Integer, default=0)
     tournament_id = Column(Integer, ForeignKey("tournaments.tournament_id"), nullable=False)

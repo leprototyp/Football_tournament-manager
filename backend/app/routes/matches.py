@@ -50,7 +50,7 @@ def create_match(data: MatchSchedule, db: Session = Depends(get_db)):
         match_kwargs["referee"] = data.referee
 
     new_m = models.Match(
-        referee=data.referee,**match_kwargs)
+        **match_kwargs)
     db.add(new_m)
     db.commit()
     db.refresh(new_m)

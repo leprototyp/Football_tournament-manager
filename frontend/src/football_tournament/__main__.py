@@ -396,6 +396,10 @@ class TournamentApp(tk.Tk):
     def setup_matches_tab(self):
         if self.is_organizer:
             top_bar = ttk.Frame(self.tab_matches)
+            ttk.Label(top_bar, text="Tournament:").pack(side="left", padx=(0, 5))
+            self.matches_tournament_cb = ttk.Combobox(top_bar, state="readonly", width=20)
+            self.matches_tournament_cb.pack(side="left", padx=(0, 10))
+            self.matches_tournament_cb.bind("<<ComboboxSelected>>", lambda e: self.refresh_matches_tab_content())
             top_bar.pack(fill="x", pady=(0, 10))
             ttk.Button(top_bar, text="+ Schedule Match", command=lambda: ScheduleMatchForm(self, self.refresh_all)).pack(side="left", padx=(0, 5))
             ttk.Button(top_bar, text="✏️ Update Score", command=self.open_update_score).pack(side="left")
@@ -417,7 +421,132 @@ class TournamentApp(tk.Tk):
         away_team = str(item_values[4])
         UpdateScoreForm(self, match_id, home_team, away_team, self.refresh_all)
 
+    
+    
+
+
+    
+
+
+
+    def refresh_matches_tab_content(self):
+        selected_name = getattr(self, 'matches_tournament_cb', None) and self.matches_tournament_cb.get()
+        tournament_id = getattr(self, 'tournament_map', {}).get(selected_name)
+        
+        for item in self.tree_matches.get_children():
+            self.tree_matches.delete(item)
+            
+        try:
+            # Récupérer tous les matchs sans passer tournament_id en paramètre API
+            matches = api.get_matches()
+            
+            for m in matches:
+                # Filtrer en Python si un tournoi spécifique est sélectionné
+                m_tid = m.get('tournament_id') if isinstance(m, dict) else getattr(m, 'tournament_id', None)
+                if tournament_id is not None and m_tid != tournament_id:
+                    continue
+                
+                mid = m.get('match_id') or m.get('id', '')
+                mdate = m.get('match_date') or m.get('date', '')
+                
+                home_id = m.get('home_team_id') or m.get('home_team')
+                away_id = m.get('away_team_id') or m.get('away_team')
+                
+                # Résolution des noms d'équipes via team_map avec fallback sur l'ID ou le nom brut
+                team_map = getattr(self, 'team_map', {})
+                home_name = team_map.get(home_id) or team_map.get(str(home_id)) or m.get('home_team_name') or str(home_id or '')
+                away_name = team_map.get(away_id) or team_map.get(str(away_id)) or m.get('away_team_name') or str(away_id or '')
+                
+                h_score = m.get('home_score', '-')
+                a_score = m.get('away_score', '-')
+                score = f"{h_score if h_score is not None else '-'} - {a_score if a_score is not None else '-'}"
+                
+                self.tree_matches.insert("", "end", values=(mid, mdate, home_name, score, away_name))
+        except Exception as e:
+            print("Erreur filtre matches :", e)
+
+    def refresh_standings_tab_content(self):
+        selected_name = getattr(self, 'standings_tournament_cb', None) and self.standings_tournament_cb.get()
+        tournament_id = getattr(self, 'tournament_map', {}).get(selected_name)
+        
+        for item in self.tree_standings.get_children():
+            self.tree_standings.delete(item)
+            
+        try:
+            if tournament_id:
+                standings = api.get_standings(tournament_id=tournament_id)
+            else:
+                tournaments = api.get_tournaments()
+                standings = []
+                for t in tournaments:
+                    tid = t.get('id') if isinstance(t, dict) else getattr(t, 'id', None)
+                    if tid:
+                        try:
+                            standings.extend(api.get_standings(tournament_id=tid))
+                        except:
+                            pass
+                    
+            for s in standings:
+                rank = s.get('rank', '')
+                team_id = s.get('team_id') or s.get('team')
+                team = getattr(self, 'team_map', {}).get(team_id, s.get('team_name') or team_id or '')
+                p = s.get('played', '')
+                w = s.get('won', '')
+                d = s.get('drawn', '')
+                l = s.get('lost', '')
+                gf = s.get('goals_for', '')
+                ga = s.get('goals_against', '')
+                gd = s.get('goal_difference', '')
+                pts = s.get('points', '')
+                self.tree_standings.insert("", "end", values=(rank, team, p, w, d, l, gf, ga, gd, pts))
+        except Exception as e:
+            print("Erreur filtre standings :", e)
+
+
+    def load_tournaments_into_combos(self):
+        try:
+            # Charger d'abord les équipes pour construire team_map de manière fiable
+            teams = api.get_teams()
+            self.team_map = {}
+            for t in teams:
+                if isinstance(t, dict):
+                    tid = t.get('id') or t.get('team_id')
+                    tname = t.get('name')
+                else:
+                    tid = getattr(t, 'id', getattr(t, 'team_id', None))
+                    tname = getattr(t, 'name', str(t))
+                if tid is not None:
+                    self.team_map[int(tid)] = tname
+                    self.team_map[str(tid)] = tname
+
+            tournaments = api.get_tournaments()
+            t_names = ["All Tournaments"]
+            self.tournament_map = {"All Tournaments": None}
+            for t in tournaments:
+                if isinstance(t, dict):
+                    name = t.get('name')
+                    tid = t.get('id') or t.get('tournament_id')
+                else:
+                    name = getattr(t, 'name', str(t))
+                    tid = getattr(t, 'id', getattr(t, 'tournament_id', None))
+                if name:
+                    t_names.append(name)
+                    self.tournament_map[name] = tid
+            
+            if hasattr(self, 'matches_tournament_cb'):
+                self.matches_tournament_cb['values'] = t_names
+                if not self.matches_tournament_cb.get() or self.matches_tournament_cb.get() not in t_names:
+                    self.matches_tournament_cb.set("All Tournaments")
+                    
+            if hasattr(self, 'standings_tournament_cb'):
+                self.standings_tournament_cb['values'] = t_names
+                if not self.standings_tournament_cb.get() or self.standings_tournament_cb.get() not in t_names:
+                    self.standings_tournament_cb.set("All Tournaments")
+        except Exception as e:
+            print("Erreur lors du chargement des données de référence :", e)
+
     def refresh_all(self):
+        self.load_tournaments_into_combos()
         self.load_standings()
         # Load Tournaments
         for item in self.tree_tournaments.get_children():
@@ -480,6 +609,12 @@ class TournamentApp(tk.Tk):
 
 
     def setup_standings_tab(self):
+        standings_top_frame = ttk.Frame(self.tab_standings)
+        standings_top_frame.pack(fill="x", pady=(0, 10))
+        ttk.Label(standings_top_frame, text="Tournament:").pack(side="left", padx=(0, 5))
+        self.standings_tournament_cb = ttk.Combobox(standings_top_frame, state="readonly", width=20)
+        self.standings_tournament_cb.pack(side="left", padx=(0, 10))
+        self.standings_tournament_cb.bind("<<ComboboxSelected>>", lambda e: self.refresh_standings_tab_content())
         columns = ("Rank", "Team", "P", "W", "D", "L", "GF", "GA", "GD", "Pts")
         self.tree_standings = ttk.Treeview(self.tab_standings, columns=columns, show="headings")
         
@@ -595,3 +730,82 @@ class TournamentApp(tk.Tk):
 if __name__ == "__main__":
     app = TournamentApp()
     app.mainloop()
+
+
+
+
+
+
+    def refresh_matches_tab_content(self):
+        selected_name = getattr(self, 'matches_tournament_cb', None) and self.matches_tournament_cb.get()
+        tournament_id = getattr(self, 'tournament_map', {}).get(selected_name)
+        
+        for item in self.tree_matches.get_children():
+            self.tree_matches.delete(item)
+            
+        try:
+            # Récupérer tous les matchs sans passer tournament_id en paramètre API
+            matches = api.get_matches()
+            
+            for m in matches:
+                # Filtrer en Python si un tournoi spécifique est sélectionné
+                m_tid = m.get('tournament_id') if isinstance(m, dict) else getattr(m, 'tournament_id', None)
+                if tournament_id is not None and m_tid != tournament_id:
+                    continue
+                
+                mid = m.get('match_id') or m.get('id', '')
+                mdate = m.get('match_date') or m.get('date', '')
+                
+                home_id = m.get('home_team_id') or m.get('home_team')
+                away_id = m.get('away_team_id') or m.get('away_team')
+                
+                # Résolution des noms d'équipes via team_map avec fallback sur l'ID ou le nom brut
+                team_map = getattr(self, 'team_map', {})
+                home_name = team_map.get(home_id) or team_map.get(str(home_id)) or m.get('home_team_name') or str(home_id or '')
+                away_name = team_map.get(away_id) or team_map.get(str(away_id)) or m.get('away_team_name') or str(away_id or '')
+                
+                h_score = m.get('home_score', '-')
+                a_score = m.get('away_score', '-')
+                score = f"{h_score if h_score is not None else '-'} - {a_score if a_score is not None else '-'}"
+                
+                self.tree_matches.insert("", "end", values=(mid, mdate, home_name, score, away_name))
+        except Exception as e:
+            print("Erreur filtre matches :", e)
+
+    def refresh_standings_tab_content(self):
+        selected_name = getattr(self, 'standings_tournament_cb', None) and self.standings_tournament_cb.get()
+        tournament_id = getattr(self, 'tournament_map', {}).get(selected_name)
+        
+        for item in self.tree_standings.get_children():
+            self.tree_standings.delete(item)
+            
+        try:
+            if tournament_id:
+                standings = api.get_standings(tournament_id=tournament_id)
+            else:
+                # Si get_standings requiert un tournament_id par défaut, on itère sur tous les tournois ou on gère le cas vide
+                tournaments = api.get_tournaments()
+                standings = []
+                for t in tournaments:
+                    tid = t.get('id') if isinstance(t, dict) else getattr(t, 'id', None)
+                    if tid:
+                        try:
+                            standings.extend(api.get_standings(tournament_id=tid))
+                        except:
+                            pass
+                
+            for s in standings:
+                rank = s.get('rank', '')
+                team_id = s.get('team_id') or s.get('team')
+                team = self.team_map.get(team_id, s.get('team_name') or team_id or '')
+                p = s.get('played', '')
+                w = s.get('won', '')
+                d = s.get('drawn', '')
+                l = s.get('lost', '')
+                gf = s.get('goals_for', '')
+                ga = s.get('goals_against', '')
+                gd = s.get('goal_difference', '')
+                pts = s.get('points', '')
+                self.tree_standings.insert("", "end", values=(rank, team, p, w, d, l, gf, ga, gd, pts))
+        except Exception as e:
+            print("Erreur filtre standings :", e)

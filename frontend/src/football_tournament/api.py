@@ -74,11 +74,11 @@ def update_match_result(match_id: int, home_score: int, away_score: int):
     params = {"home_score": home_score, "away_score": away_score}
     
     attempts = [
-        ("PUT", f"{API_URL}/matches/{match_id}/score", payload, None),
+        ("PUT", f"{API_URL}/matches/{match_id}", payload, None),
         ("PUT", f"{API_URL}/matches/{match_id}", payload, None),
         ("PATCH", f"{API_URL}/matches/{match_id}", payload, None),
-        ("PUT", f"{API_URL}/matches/{match_id}/score", None, params),
-        ("POST", f"{API_URL}/matches/{match_id}/score", payload, None),
+        ("PUT", f"{API_URL}/matches/{match_id}", None, params),
+        ("POST", f"{API_URL}/matches/{match_id}", payload, None),
     ]
     
     last_res = None
@@ -96,13 +96,25 @@ def update_score(match_id: int, home_score: int, away_score: int):
         "home_score": home_score,
         "away_score": away_score
     }
-    res = requests.put(f"{API_URL}/matches/{match_id}/score", json=payload, headers=get_headers())
+    res = requests.put(f"{API_URL}/matches/{match_id}", json=payload, headers=get_headers())
     res.raise_for_status()
     return res.json()
 
 
 def get_standings(tournament_id: int):
     res = requests.get(f"{API_URL}/tournaments/{tournament_id}/ranking", headers=get_headers())
+    res.raise_for_status()
+    return res.json()
+
+def create_match_scheduled(tournament_id: int, home_team_id: int, away_team_id: int, match_date: str, referee: str):
+    payload = {
+        "tournament_id": tournament_id,
+        "home_team_id": home_team_id,
+        "away_team_id": away_team_id,
+        "match_date": match_date,
+        "referee": referee
+    }
+    res = requests.post(f"{API_URL}/matches/", json=payload, headers=get_headers())
     res.raise_for_status()
     return res.json()
 

@@ -467,41 +467,76 @@ class TournamentApp(tk.Tk):
 
     def refresh_standings_tab_content(self):
         selected_name = getattr(self, 'standings_tournament_cb', None) and self.standings_tournament_cb.get()
-        tournament_id = getattr(self, 'tournament_map', {}).get(selected_name)
+        raw_tid = getattr(self, 'tournament_map', {}).get(selected_name)
+        try:
+            tournament_id = int(raw_tid) if raw_tid is not None else None
+        except (TypeError, ValueError):
+            tournament_id = None
         
         for item in self.tree_standings.get_children():
             self.tree_standings.delete(item)
-            
+        
         try:
-            if tournament_id:
-                standings = api.get_standings(tournament_id=tournament_id)
-            else:
-                tournaments = api.get_tournaments()
-                standings = []
-                for t in tournaments:
-                    tid = t.get('id') if isinstance(t, dict) else getattr(t, 'id', None)
-                    if tid:
-                        try:
-                            standings.extend(api.get_standings(tournament_id=tid))
-                        except:
-                            pass
-                    
-            for s in standings:
-                rank = s.get('rank', '')
-                team_id = s.get('team_id') or s.get('team')
-                team = getattr(self, 'team_map', {}).get(team_id, s.get('team_name') or team_id or '')
-                p = s.get('played', '')
-                w = s.get('won', '')
-                d = s.get('drawn', '')
-                l = s.get('lost', '')
-                gf = s.get('goals_for', '')
-                ga = s.get('goals_against', '')
-                gd = s.get('goal_difference', '')
-                pts = s.get('points', '')
-                self.tree_standings.insert("", "end", values=(rank, team, p, w, d, l, gf, ga, gd, pts))
-        except Exception as e:
-            print("Erreur filtre standings :", e)
+            teams = {int(t.get("team_id")): t.get("name") for t in api.get_teams() if t.get("team_id") is not None}
+            stats = {}
+            for t_id, t_name in teams.items():
+                stats[t_id] = {
+                    "name": t_name, "played": 0, "won": 0, "drawn": 0, "lost": 0,
+                    "gf": 0, "ga": 0, "gd": 0, "pts": 0
+                }
 
+            matches = api.get_matches()
+            for m in matches:
+                m_tid = m.get("tournament_id")
+                if tournament_id is not None and m_tid != tournament_id:
+                    continue
+                
+                h_score = m.get("home_score")
+                a_score = m.get("away_score")
+                try:
+                    h_id = int(m.get("home_team_id"))
+                    a_id = int(m.get("away_team_id"))
+                except (TypeError, ValueError):
+                    continue
+
+                if h_score is not None and a_score is not None and h_id in stats and a_id in stats:
+                    stats[h_id]["played"] += 1
+                    stats[a_id]["played"] += 1
+                    stats[h_id]["gf"] += h_score
+                    stats[h_id]["ga"] += a_score
+                    stats[a_id]["gf"] += a_score
+                    stats[a_id]["ga"] += h_score
+
+                    if h_score > a_score:
+                        stats[h_id]["won"] += 1
+                        stats[h_id]["pts"] += 3
+                        stats[a_id]["lost"] += 1
+                    elif a_score > h_score:
+                        stats[a_id]["won"] += 1
+                        stats[a_id]["pts"] += 3
+                        stats[h_id]["lost"] += 1
+                    else:
+                        stats[h_id]["drawn"] += 1
+                        stats[a_id]["drawn"] += 1
+                        stats[h_id]["pts"] += 1
+                        stats[a_id]["pts"] += 1
+
+            for s in stats.values():
+                s["gd"] = s["gf"] - s["ga"]
+
+            sorted_teams = sorted(
+                stats.values(),
+                key=lambda x: (x["pts"], x["gd"], x["gf"]),
+                reverse=True
+            )
+
+            for idx, s in enumerate(sorted_teams, 1):
+                self.tree_standings.insert("", "end", values=(
+                    idx, s["name"], s["played"], s["won"], s["drawn"], s["lost"],
+                    s["gf"], s["ga"], f"{s['gd']:+d}" if s["gd"] != 0 else "0", s["pts"]
+                ))
+        except Exception as e:
+            print("Error loading standings:", e)
 
     def load_tournaments_into_combos(self):
         try:
@@ -567,44 +602,8 @@ class TournamentApp(tk.Tk):
         except Exception:
             pass
 
-        # Load Matches
-        for item in self.tree_matches.get_children():
-            self.tree_matches.delete(item)
-        try:
-            # Dictionnaire pour convertir ID -> Nom d'équipe
-            teams_dict = {}
-            try:
-                for t in api.get_teams():
-                    teams_dict[t.get("team_id")] = t.get("name")
-            except Exception:
-                pass
-
-            for m in api.get_matches():
-                referee = m.get("referee") or "N/A"
-                h_score = m.get("home_score")
-                a_score = m.get("away_score")
-                
-                if h_score is not None and a_score is not None:
-                    score_str = f"{h_score} - {a_score}"
-                else:
-                    score_str = "-"
-
-                home_id = m.get("home_team_id")
-                away_id = m.get("away_team_id")
-
-                home_name = teams_dict.get(home_id, f"Team #{home_id}")
-                away_name = teams_dict.get(away_id, f"Team #{away_id}")
-
-                self.tree_matches.insert("", "end", values=(
-                    m.get("match_id"),
-                    m.get("match_date"),
-                    home_name,
-                    score_str,
-                    away_name,
-                    referee
-                ))
-        except Exception:
-            pass
+        # Load Matches (respecting selected tournament filter)
+        self.refresh_matches_tab_content()
 
 
 
@@ -772,40 +771,3 @@ if __name__ == "__main__":
         except Exception as e:
             print("Erreur filtre matches :", e)
 
-    def refresh_standings_tab_content(self):
-        selected_name = getattr(self, 'standings_tournament_cb', None) and self.standings_tournament_cb.get()
-        tournament_id = getattr(self, 'tournament_map', {}).get(selected_name)
-        
-        for item in self.tree_standings.get_children():
-            self.tree_standings.delete(item)
-            
-        try:
-            if tournament_id:
-                standings = api.get_standings(tournament_id=tournament_id)
-            else:
-                # Si get_standings requiert un tournament_id par défaut, on itère sur tous les tournois ou on gère le cas vide
-                tournaments = api.get_tournaments()
-                standings = []
-                for t in tournaments:
-                    tid = t.get('id') if isinstance(t, dict) else getattr(t, 'id', None)
-                    if tid:
-                        try:
-                            standings.extend(api.get_standings(tournament_id=tid))
-                        except:
-                            pass
-                
-            for s in standings:
-                rank = s.get('rank', '')
-                team_id = s.get('team_id') or s.get('team')
-                team = self.team_map.get(team_id, s.get('team_name') or team_id or '')
-                p = s.get('played', '')
-                w = s.get('won', '')
-                d = s.get('drawn', '')
-                l = s.get('lost', '')
-                gf = s.get('goals_for', '')
-                ga = s.get('goals_against', '')
-                gd = s.get('goal_difference', '')
-                pts = s.get('points', '')
-                self.tree_standings.insert("", "end", values=(rank, team, p, w, d, l, gf, ga, gd, pts))
-        except Exception as e:
-            print("Erreur filtre standings :", e)

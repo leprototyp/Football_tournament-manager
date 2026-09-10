@@ -466,13 +466,13 @@ class TournamentApp(tk.Tk):
 
 
     def setup_matches_tab(self):
+        top_bar = ttk.Frame(self.tab_matches)
+        ttk.Label(top_bar, text="Tournament:").pack(side="left", padx=(0, 5))
+        self.matches_tournament_cb = ttk.Combobox(top_bar, state="readonly", width=20)
+        self.matches_tournament_cb.pack(side="left", padx=(0, 10))
+        self.matches_tournament_cb.bind("<<ComboboxSelected>>", lambda e: self.refresh_matches_tab_content())
+        top_bar.pack(fill="x", pady=(0, 10))
         if self.is_organizer:
-            top_bar = ttk.Frame(self.tab_matches)
-            ttk.Label(top_bar, text="Tournament:").pack(side="left", padx=(0, 5))
-            self.matches_tournament_cb = ttk.Combobox(top_bar, state="readonly", width=20)
-            self.matches_tournament_cb.pack(side="left", padx=(0, 10))
-            self.matches_tournament_cb.bind("<<ComboboxSelected>>", lambda e: self.refresh_matches_tab_content())
-            top_bar.pack(fill="x", pady=(0, 10))
             ttk.Button(top_bar, text="+ Schedule Match", command=lambda: ScheduleMatchForm(self, self.refresh_all)).pack(side="left", padx=(0, 5))
             ttk.Button(top_bar, text="✏️ Update Score", command=self.open_update_score).pack(side="left", padx=(0, 5))
             ttk.Button(top_bar, text="Delete", command=self.delete_selected_match).pack(side="left")

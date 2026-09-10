@@ -1,0 +1,151 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{geometry}
+\usepackage{microtype}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+
+\geometry{margin=2.5cm, bottom=3cm}
+
+% Configuration des liens hypertexte (aspect professionnel sans cadres colorés voyants)
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!50!black,
+    citecolor=blue!50!black,
+    urlcolor=blue!50!black
+}
+
+% Configuration des en-têtes et pieds de page professionnels
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[L]{\footnotesize\ttfamily rostand.assonfo-demaboi@thga.stud.de}
+\fancyfoot[C]{THGA Bochum}
+\fancyfoot[R]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+\lstset{
+    basicstyle=\ttfamily\small\color{white},
+    backgroundcolor=\color{black},
+    rulecolor=\color{black},
+    frame=single,
+    breaklines=true,
+    captionpos=b,
+    xleftmargin=0pt,
+    xrightmargin=0pt
+}
+
+\title{\textbf{User Manual -- Football Tournament Management System}}
+\author{Rostand Cedrix Assonfo Demaboi}
+\date{Summer Term 2026}
+
+\begin{document}
+
+\maketitle
+
+\noindent\textbf{Technische Hochschule Georg Agricola, Bochum} \\
+\textbf{Module:} Introduction to Database Management Systems \\
+\textbf{Dozent:} Stephan Bökelmann (\href{mailto:sboekelmann@ep1.rub.de}{sboekelmann@ep1.rub.de})
+
+\vspace{1cm}
+
+\section{Introduction and System Overview}
+
+The \emph{Football Tournament Management System} is an application designed to organize, track, and administer football competitions. The system relies on a decoupled architecture:
+\begin{itemize}
+    \item \textbf{Backend}: A REST API developed with FastAPI and connected to a relational database.
+    \item \textbf{Frontend}: A desktop graphical interface developed in Python Tkinter, handling user interaction.
+    \item \textbf{Orchestration}: Containerized deployment via Docker Compose ensuring infrastructure portability and stability.
+\end{itemize}
+
+Two main user roles are supported by the system:
+\begin{itemize}
+    \item \textbf{Organizer Mode}: Full access to write operations (creation, modification, and deletion of tournaments, teams, and matches) via an authentication key (\texttt{X-API-Key}).
+    \item \textbf{Viewer Mode}: Read-only mode accessible to all participants, allowing them to view schedules, scores, and real-time updated rankings.
+\end{itemize}
+
+\section{Backend Deployment and Launch (Docker Compose)}
+
+The backend server and database run via Docker Compose to ensure runtime environment integrity.
+
+\subsection*{Deployment Procedure}
+\begin{enumerate}
+    \item Open a terminal and navigate to the project root directory:
+\begin{lstlisting}
+cd ~/football-tournament-manager
+\end{lstlisting}
+    \item Launch the containers in the background:
+\begin{lstlisting}
+docker compose up --build -d
+\end{lstlisting}
+    \item Check the status of active services:
+\begin{lstlisting}
+docker compose ps
+\end{lstlisting}
+\end{enumerate}
+
+\section{Frontend Launch and Connection}
+
+Once the backend server is operational on port 8000, the client graphical interface can be started.
+
+\subsection*{Launch Commands}
+\begin{lstlisting}
+cd frontend
+source venv/bin/activate
+python3 -m football_tournament
+\end{lstlisting}
+
+\subsection*{Startup Connection Dialog}
+At startup, the application presents a window requesting connection details:
+\begin{itemize}
+    \item \textbf{API URL}: Specify the server address (default: \url{http://localhost:8000}).
+    \item \textbf{X-API-Key}:
+    \begin{itemize}
+        \item Enter the administrator key (\texttt{mykey}) to enable Organizer Mode.
+        \item Leave the field blank to access Viewer Mode directly.
+    \end{itemize}
+\end{itemize}
+
+\section{Interface Navigation and Usage}
+
+The main interface is structured around a tabbed dashboard allowing seamless navigation between the system's various entities.
+
+\subsection*{Tournaments Tab}
+\begin{itemize}
+    \item Displays the complete list of registered competitions.
+    \item Allows viewing start dates, end dates, and the current status of each tournament.
+\end{itemize}
+
+\subsection*{Teams Tab}
+\begin{itemize}
+    \item Lists participating clubs with their unique identifier, official name, and coach/manager name.
+\end{itemize}
+
+\subsection*{Matches Tab}
+\begin{itemize}
+    \item \textbf{Global Tournament Selector}: Located at the top of the tab (active in both modes), it allows instantly filtering matches to show only those of a specific tournament or selecting "All Tournaments".
+    \item \textbf{Score Format}: Planned matches with scores not yet defined explicitly display a dash (-). Validated scores are displayed in the \texttt{Home - Away} format.
+    \item \textbf{Referee}: A dedicated column indicates the name of the referee assigned to the fixture.
+\end{itemize}
+
+\subsection*{Standings Tab}
+\begin{itemize}
+    \item Dynamically calculates team rankings per tournament based on aggregated match results (points, wins, draws, losses, goals for, goals against, and goal difference).
+\end{itemize}
+
+\section{Administrative Operations and Logout Guide}
+
+Users authenticated as organizers have additional action buttons in the management tabs:
+\begin{itemize}
+    \item \textbf{Scheduling a Match}: Click the \texttt{+ Schedule Match} button to open the creation form, select the tournament, home and away teams, date, and save via \texttt{[SAVE MATCH]}.
+    \item \textbf{Updating a Score}: Select a fixture in the matches table and click \texttt{Update Score} to modify the recorded goals.
+    \item \textbf{Deletion}: Use the \texttt{Delete} button to remove an obsolete team or match from the database. All deletions strictly respect database referential integrity constraints.
+    \item \textbf{Synchronization}: In case of external changes, use the \texttt{Refresh Data} button located in the upper toolbar to instantly refresh the local display from the API.
+    \item \textbf{Logout}: To terminate an active session or switch user roles (e.g., from Organizer Mode back to Viewer Mode), simply close the application window or use the logout/disconnect option available in the connection panel. Reopening the app will prompt you again for credentials.
+\end{itemize}
+
+\end{document}

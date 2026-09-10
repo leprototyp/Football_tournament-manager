@@ -1,0 +1,1570 @@
+\documentclass[12pt,a4paper]{article}
+
+% ============================================================
+% PACKAGES
+% ============================================================
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{float}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{caption}
+\usepackage{tikz}
+\usetikzlibrary{positioning,calc,arrows.meta}
+\usepackage{amsmath}
+
+% ============================================================
+% PAGE GEOMETRY
+% ============================================================
+
+\geometry{
+    left=2.5cm,
+    right=2.5cm,
+    top=2.5cm,
+    bottom=3.0cm,
+    headheight=15pt,
+    headsep=0.5cm,
+    footskip=1.0cm
+}
+
+% ============================================================
+% HYPERLINK CONFIGURATION
+% ============================================================
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue,
+    pdftitle={Developer Manual - Football Tournament Management System},
+    pdfauthor={Rostand Cedrix Assonfo Demaboi}
+}
+
+% ============================================================
+% CODE LISTING CONFIGURATION
+% ============================================================
+
+\definecolor{codegray}{gray}{0.95}
+\definecolor{codecomment}{gray}{0.45}
+
+\lstset{
+    backgroundcolor=\color{codegray},
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny,
+    keywordstyle=\bfseries,
+    commentstyle=\itshape\color{codecomment},
+    showstringspaces=false,
+    tabsize=4
+}
+
+% ============================================================
+% HEADER / FOOTER
+% ============================================================
+
+\pagestyle{fancy}
+\fancyhf{}
+
+\lhead{\footnotesize Football Tournament Management System}
+\rhead{\footnotesize Developer Manual}
+
+\fancyfoot[L]{\footnotesize\ttfamily rostand.assonfo-demaboi@thga.stud.de}
+\fancyfoot[C]{\footnotesize THGA Bochum}
+\fancyfoot[R]{\footnotesize\thepage}
+
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% ============================================================
+% DOCUMENT
+% ============================================================
+
+\begin{document}
+
+% ============================================================
+% TITLE PAGE
+% ============================================================
+
+\begin{titlepage}
+\thispagestyle{fancy}
+\centering
+
+\vspace*{2cm}
+
+{\Huge \textbf{Football Tournament Management System}\par}
+
+\vspace{1cm}
+
+{\LARGE Developer Manual\par}
+
+\vspace{2cm}
+
+{\large
+Technical Documentation for Developers
+\par}
+
+\vspace{1.5cm}
+
+\begin{tabular}{ll}
+\textbf{Author:} & Rostand Cedrix Assonfo Demaboi \\
+\textbf{Institution:} & Technische Hochschule Georg Agricola, Bochum \\
+\textbf{Module:} & Introduction to Database Management Systems \\
+\textbf{Semester:} & Summer Term 2026 \\
+\end{tabular}
+
+\vfill
+
+{\large Version 1.0}
+
+\vspace{0.5cm}
+
+{\large \today}
+
+\end{titlepage}
+
+% ============================================================
+% TABLE OF CONTENTS
+% ============================================================
+
+\tableofcontents
+\newpage
+
+% ============================================================
+% 1. INTRODUCTION
+% ============================================================
+
+\section{Introduction}
+
+\subsection{Purpose of this Document}
+
+This document is the technical developer manual for the
+Football Tournament Management System.
+
+Its purpose is to provide future developers with the information
+required to understand, install, maintain, test, and extend the
+application.
+
+Unlike a user manual, which focuses on how to operate the application,
+this document focuses on the internal architecture, source code,
+database structure, REST API, business logic, configuration, and
+development workflow.
+
+\subsection{System Overview}
+
+The Football Tournament Management System is a small client-server
+application designed to organize football competitions.
+
+The application is divided into three principal layers:
+
+\begin{itemize}
+    \item a Python/Tkinter desktop frontend;
+    \item a Python/FastAPI REST backend;
+    \item a PostgreSQL relational database.
+\end{itemize}
+
+The system manages tournaments, teams, players, scheduled matches,
+match scores, referees, and tournament participation.
+
+\subsection{Main Functional Areas}
+
+The application provides functionality for:
+
+\begin{itemize}
+    \item tournament management;
+    \item team management;
+    \item player storage;
+    \item match scheduling;
+    \item match score updates;
+    \item tournament/team associations;
+    \item tournament standings in the frontend.
+\end{itemize}
+
+\subsection{Important Implementation Note}
+
+This manual documents the implementation found in the project source.
+Some parts of the README and frontend refer to functionality that is
+not completely connected to the current backend implementation.
+These differences are documented in Section~\ref{sec:technical-debt}
+instead of being hidden.
+
+% ============================================================
+% 2. TECHNOLOGY STACK
+% ============================================================
+
+\section{Technology Stack}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Component} & \textbf{Technology} \\
+\midrule
+Backend & Python 3.12 / FastAPI \\
+ORM & SQLAlchemy \\
+Validation & Pydantic \\
+Frontend & Python / Tkinter \\
+HTTP Client & Requests \\
+Database & PostgreSQL \\
+API Documentation & FastAPI / OpenAPI \\
+Containerization & Docker / Docker Compose \\
+Documentation & LaTeX \\
+\bottomrule
+\end{tabular}
+\caption{Technology stack}
+\end{table}
+
+\subsection{Backend}
+
+The backend is implemented with FastAPI. It exposes REST endpoints
+for tournaments, teams, and matches.
+
+SQLAlchemy is used for database access and ORM models, while Pydantic
+schemas are used for request and response validation.
+
+\subsection{Frontend}
+
+The frontend is a Python desktop application based on Tkinter.
+It communicates with the backend through HTTP requests.
+
+The frontend contains a connection dialog, a dashboard, tournament,
+team, match, and standings views, as well as forms for administrative
+operations.
+
+\subsection{Database}
+
+The SQL database is PostgreSQL. The database initialization scripts are
+located in the \texttt{database/} directory.
+
+\subsection{Docker}
+
+The backend contains a Dockerfile based on Python 3.12 slim.
+The repository also contains a \texttt{docker-compose.yml} file.
+
+The current Compose configuration should be checked before deployment,
+because the repository's Compose file does not define a PostgreSQL
+service even though PostgreSQL is required by the application.
+
+% ============================================================
+% 3. SYSTEM ARCHITECTURE
+% ============================================================
+
+\section{System Architecture}
+
+\subsection{Architecture Overview}
+
+The application follows a client-server architecture.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=2.2cm,
+    box/.style={
+        rectangle,
+        draw,
+        rounded corners,
+        minimum width=5cm,
+        minimum height=1.2cm,
+        align=center
+    },
+    arrow/.style={-{Latex[length=3mm]}, thick}
+]
+
+\node[box] (frontend) {Tkinter Frontend\\Python};
+\node[box, below=of frontend] (api) {FastAPI Backend\\REST API};
+\node[box, below=of api] (database) {PostgreSQL Database\\SQL};
+
+\draw[arrow] (frontend) -- node[right] {HTTP / REST} (api);
+\draw[arrow] (api) -- node[right] {SQLAlchemy / SQL} (database);
+
+\end{tikzpicture}
+\caption{System architecture}
+\label{fig:architecture}
+\end{figure}
+
+\subsection{Frontend Layer}
+
+The frontend is responsible for user interaction and presentation.
+It should communicate with the backend API rather than accessing the
+database directly.
+
+The main frontend modules are located in:
+
+\begin{lstlisting}
+frontend/src/football_tournament/
+\end{lstlisting}
+
+Important modules include:
+
+\begin{itemize}
+    \item \texttt{api.py}: HTTP client and API helper functions;
+    \item \texttt{connection\_dialog.py}: API URL/token configuration;
+    \item \texttt{ui/dashboard.py}: main dashboard and tabs;
+    \item \texttt{\_\_main\_\_.py}: application entry point and forms.
+\end{itemize}
+
+\subsection{Backend Layer}
+
+The backend is responsible for:
+
+\begin{itemize}
+    \item receiving HTTP requests;
+    \item validating request data;
+    \item executing application logic;
+    \item interacting with PostgreSQL;
+    \item returning JSON responses.
+\end{itemize}
+
+The main backend package is:
+
+\begin{lstlisting}
+backend/app/
+\end{lstlisting}
+
+\subsection{Database Layer}
+
+The database stores persistent information and enforces structural
+integrity through primary keys, foreign keys, unique constraints,
+checks, and deletion rules.
+
+% ============================================================
+% 4. PROJECT STRUCTURE
+% ============================================================
+
+\section{Project Structure}
+
+The principal repository structure is:
+
+\begin{lstlisting}
+football-tournament-manager/
+|
++-- backend/
+|   +-- app/
+|   |   +-- __init__.py
+|   |   +-- auth.py
+|   |   +-- database.py
+|   |   +-- main.py
+|   |   +-- models/
+|   |   +-- routes/
+|   |   +-- schemas/
+|   +-- Dockerfile
+|   +-- requirements.txt
+|   +-- seed.py
+|   +-- .env
+|
++-- frontend/
+|   +-- src/
+|       +-- football_tournament/
+|           +-- __main__.py
+|           +-- api.py
+|           +-- connection_dialog.py
+|           +-- ui/
+|
++-- database/
+|   +-- init.sql
+|   +-- seed.sql
+|
++-- docker-compose.yml
++-- README.md
++-- DEVELOPER_MANUAL.tex
+\end{lstlisting}
+
+\subsection{Backend Modules}
+
+\subsubsection{\texttt{main.py}}
+
+Creates the FastAPI application, configures CORS, and includes the
+tournament, team, and match routers.
+
+\subsubsection{\texttt{database.py}}
+
+Loads the database configuration, creates the SQLAlchemy engine and
+session factory, and provides database access.
+
+The application expects the environment variable
+\texttt{DATABASE\_URL}. A fallback PostgreSQL URL is also defined.
+
+\subsubsection{\texttt{auth.py}}
+
+Contains the API token verification dependency.
+
+The current implementation expects the HTTP header
+\texttt{X-API-Token} and compares it with the \texttt{API\_TOKEN}
+environment variable.
+
+\subsubsection{\texttt{models/}}
+
+Contains the SQLAlchemy ORM models for users, tournaments, teams,
+players, matches, and team/tournament associations.
+
+\subsubsection{\texttt{schemas/}}
+
+Contains the Pydantic schemas used by the API.
+
+\subsubsection{\texttt{routes/}}
+
+Contains the route modules:
+
+\begin{itemize}
+    \item \texttt{tournaments.py};
+    \item \texttt{teams.py};
+    \item \texttt{matches.py}.
+\end{itemize}
+
+% ============================================================
+% 5. INSTALLATION AND CONFIGURATION
+% ============================================================
+
+\section{Installation and Configuration}
+
+\subsection{Prerequisites}
+
+The development environment requires:
+
+\begin{itemize}
+    \item Python 3.12 or compatible Python version;
+    \item PostgreSQL;
+    \item Docker and Docker Compose, if containerization is used;
+    \item Git;
+    \item Tkinter for the desktop frontend;
+    \item LaTeX, if this developer manual is to be compiled.
+\end{itemize}
+
+\subsection{Backend Virtual Environment}
+
+A virtual environment can be created with:
+
+\begin{lstlisting}[language=bash]
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+\end{lstlisting}
+
+\subsection{Database Configuration}
+
+The backend uses environment variables for database configuration.
+
+The repository currently contains a \texttt{backend/.env} file.
+For security, real database passwords must not be committed to source
+control.
+
+The application code expects:
+
+\begin{lstlisting}
+DATABASE_URL
+\end{lstlisting}
+
+The checked-in environment file also contains separate values such as
+database host, database name, user, password, and port.
+
+A recommended development configuration is:
+
+\begin{lstlisting}
+DATABASE_URL=postgresql://USER:PASSWORD@localhost:5432/football_db
+API_TOKEN=change-this-development-token
+\end{lstlisting}
+
+\subsection{Database Initialization}
+
+The SQL initialization script is:
+
+\begin{lstlisting}
+database/init.sql
+\end{lstlisting}
+
+The test data script is:
+
+\begin{lstlisting}
+database/seed.sql
+\end{lstlisting}
+
+The backend also contains a Python seed script:
+
+\begin{lstlisting}
+backend/seed.py
+\end{lstlisting}
+
+The SQL seed and Python seed should be kept consistent with the
+database constraints.
+
+% ============================================================
+% 6. DOCKER
+% ============================================================
+
+\section{Docker and Deployment}
+
+\subsection{Backend Image}
+
+The backend Dockerfile uses Python 3.12 slim and starts Uvicorn.
+
+The container exposes port 8000.
+
+\subsection{Starting Docker Compose}
+
+Use:
+
+\begin{lstlisting}[language=bash]
+docker compose up --build -d
+\end{lstlisting}
+
+Check running services:
+
+\begin{lstlisting}[language=bash]
+docker compose ps
+\end{lstlisting}
+
+View logs:
+
+\begin{lstlisting}[language=bash]
+docker compose logs
+\end{lstlisting}
+
+Stop services:
+
+\begin{lstlisting}[language=bash]
+docker compose down
+\end{lstlisting}
+
+\subsection{Current Compose Limitation}
+
+The current \texttt{docker-compose.yml} contains the backend service,
+but does not define a PostgreSQL container.
+
+Therefore PostgreSQL must currently be provided separately unless
+the Compose configuration is extended.
+
+% ============================================================
+% 7. DATABASE DESIGN
+% ============================================================
+
+\section{Database Design}
+
+\subsection{Database Overview}
+
+The database contains six principal tables:
+
+\begin{itemize}
+    \item \texttt{users};
+    \item \texttt{tournaments};
+    \item \texttt{teams};
+    \item \texttt{players};
+    \item \texttt{matches};
+    \item \texttt{team\_tournaments}.
+\end{itemize}
+
+\subsection{Entity Relationship Diagram}
+
+The following diagram represents the important relationships between
+the entities. In particular, a match references a team twice:
+once through \texttt{home\_team\_id} and once through
+\texttt{away\_team\_id}. These are deliberately shown as two separate
+relationships.
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{
+\begin{tikzpicture}[
+    entity/.style={
+        rectangle,
+        draw,
+        rounded corners=3pt,
+        minimum width=4.0cm,
+        minimum height=1.0cm,
+        align=center,
+        font=\bfseries
+    },
+    relationship/.style={
+        font=\small\itshape,
+        fill=white,
+        inner sep=2pt
+    },
+    cardinality/.style={
+        font=\small
+    },
+    rel/.style={thick}
+]
+
+% ------------------------------------------------------------
+% Entities
+% ------------------------------------------------------------
+
+\node[entity] (users) {USERS};
+
+\node[entity, below=2.0cm of users] (tournaments)
+    {TOURNAMENTS};
+
+\node[entity, below left=2.6cm and 4.0cm of tournaments] (teams)
+    {TEAMS};
+
+\node[entity, below right=2.6cm and 4.0cm of tournaments] (matches)
+    {MATCHES};
+
+\node[entity, below=2.8cm of teams] (players)
+    {PLAYERS};
+
+\node[entity, right=5.0cm of teams] (tt)
+    {TEAM\_TOURNAMENTS};
+
+% ------------------------------------------------------------
+% Users -> Tournaments
+% ------------------------------------------------------------
+
+\draw[rel]
+    (users.south) -- 
+    node[right, relationship] {organizes}
+    node[left, cardinality, pos=0.15] {1}
+    node[left, cardinality, pos=0.85] {N}
+    (tournaments.north);
+
+% ------------------------------------------------------------
+% Tournaments -> Matches
+% ------------------------------------------------------------
+
+\draw[rel]
+    (tournaments.east) --
+    node[above, relationship] {contains}
+    node[above, cardinality, pos=0.15] {1}
+    node[above, cardinality, pos=0.85] {N}
+    (matches.west);
+
+% ------------------------------------------------------------
+% Teams -> Players
+% ------------------------------------------------------------
+
+\draw[rel]
+    (teams.south) --
+    node[left, relationship] {has}
+    node[left, cardinality, pos=0.15] {1}
+    node[left, cardinality, pos=0.85] {N}
+    (players.north);
+
+% ------------------------------------------------------------
+% Teams -> Team_Tournaments
+% ------------------------------------------------------------
+
+\draw[rel]
+    (teams.east) --
+    node[above, relationship] {participates in}
+    node[above, cardinality, pos=0.12] {1}
+    node[above, cardinality, pos=0.88] {N}
+    (tt.west);
+
+% ------------------------------------------------------------
+% Tournaments -> Team_Tournaments
+% ------------------------------------------------------------
+
+\draw[rel]
+    (tournaments.south)
+    .. controls +(0,-1.5) and +(-1.2,1.5) ..
+    node[right, relationship] {registers teams}
+    node[left, cardinality, pos=0.15] {1}
+    node[right, cardinality, pos=0.85] {N}
+    (tt.north);
+
+% ------------------------------------------------------------
+% Teams -> Matches : HOME TEAM
+% ------------------------------------------------------------
+
+\draw[rel]
+    (teams.east)
+    .. controls +(2.0,1.8) and +(-2.0,-1.8) ..
+    node[above, relationship] {home team}
+    node[above, cardinality, pos=0.12] {1}
+    node[above, cardinality, pos=0.88] {N}
+    (matches.west);
+
+% ------------------------------------------------------------
+% Teams -> Matches : AWAY TEAM
+% ------------------------------------------------------------
+
+\draw[rel]
+    (teams.east)
+    .. controls +(2.0,-1.8) and +(-2.0,1.8) ..
+    node[below, relationship] {away team}
+    node[below, cardinality, pos=0.12] {1}
+    node[below, cardinality, pos=0.88] {N}
+    (matches.west);
+
+\end{tikzpicture}
+}
+\caption{Entity relationship diagram with home-team and away-team relationships}
+\label{fig:erd}
+\end{figure}
+
+\subsection{Users Table}
+
+\begin{longtable}{p{3.0cm}p{3.0cm}p{4.0cm}p{4.0cm}}
+\toprule
+\textbf{Column} & \textbf{Type} & \textbf{Constraint} & \textbf{Description}\\
+\midrule
+\endhead
+user\_id & INTEGER & Primary key, identity & User identifier\\
+username & VARCHAR & UNIQUE, NOT NULL & Login/user name\\
+email & VARCHAR & UNIQUE, NOT NULL & Email address\\
+password & VARCHAR & NOT NULL & Stored password value\\
+role & VARCHAR & CHECK, NOT NULL & organizer, player, or viewer\\
+created\_at & TIMESTAMPTZ & NOT NULL & Account creation timestamp\\
+\bottomrule
+\end{longtable}
+
+\subsection{Tournaments Table}
+
+\begin{longtable}{p{3.0cm}p{3.0cm}p{4.0cm}p{4.0cm}}
+\toprule
+\textbf{Column} & \textbf{Type} & \textbf{Constraint} & \textbf{Description}\\
+\midrule
+\endhead
+tournament\_id & INTEGER & Primary key, identity & Tournament identifier\\
+name & VARCHAR & NOT NULL & Tournament name\\
+start\_date & DATE & NOT NULL & Start date\\
+end\_date & DATE & NOT NULL & End date\\
+organizer\_id & INTEGER & Foreign key & Responsible user\\
+\bottomrule
+\end{longtable}
+
+The database checks that the start date is not later than the end
+date. The organizer foreign key uses restrictive deletion behavior.
+
+\subsection{Teams Table}
+
+\begin{longtable}{p{3.0cm}p{3.0cm}p{4.0cm}p{4.0cm}}
+\toprule
+\textbf{Column} & \textbf{Type} & \textbf{Constraint} & \textbf{Description}\\
+\midrule
+\endhead
+team\_id & INTEGER & Primary key, identity & Team identifier\\
+name & VARCHAR & UNIQUE, NOT NULL & Team name\\
+coach & VARCHAR & Optional & Coach name\\
+\bottomrule
+\end{longtable}
+
+\subsection{Players Table}
+
+\begin{longtable}{p{3.0cm}p{3.0cm}p{4.0cm}p{4.0cm}}
+\toprule
+\textbf{Column} & \textbf{Type} & \textbf{Constraint} & \textbf{Description}\\
+\midrule
+\endhead
+player\_id & INTEGER & Primary key, identity & Player identifier\\
+first\_name & VARCHAR & NOT NULL & First name\\
+last\_name & VARCHAR & NOT NULL & Last name\\
+position & VARCHAR & Optional & Playing position\\
+team\_id & INTEGER & Foreign key & Player's team\\
+\bottomrule
+\end{longtable}
+
+The player/team relationship is one-to-many: one team can have many
+players. The player is deleted when its team is deleted.
+
+\subsection{Matches Table}
+
+\begin{longtable}{p{3.0cm}p{3.0cm}p{4.0cm}p{4.0cm}}
+\toprule
+\textbf{Column} & \textbf{Type} & \textbf{Constraint} & \textbf{Description}\\
+\midrule
+\endhead
+match\_id & INTEGER & Primary key, identity & Match identifier\\
+match\_date & TIMESTAMPTZ & NOT NULL & Scheduled match date/time\\
+home\_score & INTEGER & NOT NULL, $\geq 0$ & Home score\\
+away\_score & INTEGER & NOT NULL, $\geq 0$ & Away score\\
+tournament\_id & INTEGER & Foreign key & Tournament containing match\\
+home\_team\_id & INTEGER & Foreign key & Home team\\
+away\_team\_id & INTEGER & Foreign key & Away team\\
+referee & VARCHAR & Optional & Referee name\\
+\bottomrule
+\end{longtable}
+
+The database explicitly prevents a team from playing against itself by
+checking:
+
+\begin{lstlisting}[language=SQL]
+CHECK (home_team_id != away_team_id)
+\end{lstlisting}
+
+The two foreign keys from \texttt{matches} to \texttt{teams} are
+semantically different:
+
+\begin{itemize}
+    \item \texttt{home\_team\_id}: team playing at home;
+    \item \texttt{away\_team\_id}: team playing away.
+\end{itemize}
+
+\subsection{Team/Tournament Association}
+
+The \texttt{team\_tournaments} table represents the many-to-many
+relationship between teams and tournaments.
+
+Its primary key is composed of:
+
+\begin{lstlisting}
+(team_id, tournament_id)
+\end{lstlisting}
+
+This prevents the same team from being registered twice in the same
+tournament.
+
+% ============================================================
+% 8. REST API
+% ============================================================
+
+\section{REST API}
+
+\subsection{Base URL}
+
+The default development API URL used by the frontend is:
+
+\begin{lstlisting}
+http://localhost:8000
+\end{lstlisting}
+
+FastAPI also provides interactive documentation at:
+
+\begin{lstlisting}
+http://localhost:8000/docs
+\end{lstlisting}
+
+\subsection{Health Endpoint}
+
+The backend exposes a health endpoint:
+
+\begin{lstlisting}
+GET /health
+\end{lstlisting}
+
+A root endpoint is also available:
+
+\begin{lstlisting}
+GET /
+\end{lstlisting}
+
+\subsection{Tournament Endpoints}
+
+\begin{longtable}{lll}
+\toprule
+\textbf{Method} & \textbf{Endpoint} & \textbf{Description}\\
+\midrule
+\endhead
+GET & /tournaments & List tournaments\\
+GET & /tournaments/\{id\} & Retrieve one tournament\\
+POST & /tournaments & Create tournament\\
+DELETE & /tournaments/\{id\} & Delete tournament\\
+\bottomrule
+\end{longtable}
+
+The current backend does not expose the PUT tournament endpoint
+described in some project documentation.
+
+\subsection{Team Endpoints}
+
+\begin{longtable}{lll}
+\toprule
+\textbf{Method} & \textbf{Endpoint} & \textbf{Description}\\
+\midrule
+\endhead
+GET & /teams & List teams\\
+POST & /teams & Create team\\
+DELETE & /teams/\{id\} & Delete team\\
+\bottomrule
+\end{longtable}
+
+\subsection{Match Endpoints}
+
+\begin{longtable}{lll}
+\toprule
+\textbf{Method} & \textbf{Endpoint} & \textbf{Description}\\
+\midrule
+\endhead
+GET & /matches & List matches\\
+POST & /matches & Create match\\
+PUT & /matches/\{id\}/score & Update match score\\
+DELETE & /matches/\{id\} & Delete match\\
+\bottomrule
+\end{longtable}
+
+\subsection{Ranking Endpoint}
+
+The frontend currently contains a function intended to request:
+
+\begin{lstlisting}
+GET /tournaments/{tournament_id}/ranking
+\end{lstlisting}
+
+However, no corresponding ranking route is currently implemented in
+\texttt{backend/app/routes/tournaments.py}. This is therefore a
+known integration gap.
+
+% ============================================================
+% 9. API CLIENT
+% ============================================================
+
+\section{Frontend API Client}
+
+\subsection{\texttt{api.py}}
+
+The file:
+
+\begin{lstlisting}
+frontend/src/football_tournament/api.py
+\end{lstlisting}
+
+centralizes HTTP communication with the backend.
+
+The default configuration contains:
+
+\begin{lstlisting}
+API_URL = "http://localhost:8000"
+API_KEY = "your-secret-api-token-here"
+\end{lstlisting}
+
+The client sends the token through the header:
+
+\begin{lstlisting}
+x-api-token
+\end{lstlisting}
+
+The client provides helper functions for:
+
+\begin{itemize}
+    \item retrieving tournaments;
+    \item creating tournaments;
+    \item retrieving teams;
+    \item creating teams;
+    \item retrieving matches;
+    \item creating matches;
+    \item updating scores;
+    \item deleting resources.
+\end{itemize}
+
+The module currently contains duplicate
+\texttt{create\_match\_scheduled} definitions and a compatibility-style
+\texttt{update\_match\_result} function with several fallback requests.
+These should be simplified during maintenance.
+
+% ============================================================
+% 10. BACKEND IMPLEMENTATION
+% ============================================================
+
+\section{Backend Implementation}
+
+\subsection{Application Entry Point}
+
+The FastAPI application is created in:
+
+\begin{lstlisting}
+backend/app/main.py
+\end{lstlisting}
+
+The application configures CORS with all origins, methods, and headers
+in the current development implementation.
+
+\subsection{Database Session}
+
+Database access is centralized through SQLAlchemy.
+
+The application creates a database engine and session factory in
+\texttt{database.py}.
+
+Future changes should preserve the separation between:
+
+\begin{enumerate}
+    \item HTTP request handling;
+    \item application logic;
+    \item database operations.
+\end{enumerate}
+
+\subsection{Pydantic Schemas}
+
+The schemas module contains definitions for:
+
+\begin{itemize}
+    \item users;
+    \item tournaments;
+    \item teams;
+    \item players;
+    \item matches;
+    \item team/tournament associations;
+    \item rankings.
+\end{itemize}
+
+The ranking schema contains fields including position, team name,
+matches played, goals scored, goals conceded, and points.
+
+% ============================================================
+% 11. FRONTEND ARCHITECTURE
+% ============================================================
+
+\section{Frontend Architecture}
+
+\subsection{Connection Dialog}
+
+The connection dialog allows the user to enter:
+
+\begin{itemize}
+    \item the API URL;
+    \item the API token.
+\end{itemize}
+
+The token field is labelled as an X-API-Token value.
+
+\subsection{Dashboard}
+
+The dashboard is implemented in:
+
+\begin{lstlisting}
+frontend/src/football_tournament/ui/dashboard.py
+\end{lstlisting}
+
+It contains tabs for:
+
+\begin{itemize}
+    \item tournaments;
+    \item standings;
+    \item teams;
+    \item matches.
+\end{itemize}
+
+\subsection{Main Application}
+
+The main application and forms are defined in:
+
+\begin{lstlisting}
+frontend/src/football_tournament/__main__.py
+\end{lstlisting}
+
+The application contains forms for scheduling matches and entering
+match results.
+
+% ============================================================
+% 12. BUSINESS LOGIC
+% ============================================================
+
+\section{Business Logic}
+
+\subsection{Tournament}
+
+A tournament has:
+
+\begin{itemize}
+    \item a name;
+    \item a start date;
+    \item an end date;
+    \item an organizer;
+    \item participating teams through \texttt{team\_tournaments}.
+\end{itemize}
+
+\subsection{Match}
+
+A match belongs to one tournament and references two different teams.
+
+The two team references are:
+
+\begin{lstlisting}
+home_team_id
+away_team_id
+\end{lstlisting}
+
+This distinction is important when implementing score updates and
+ranking calculations.
+
+\subsection{Score}
+
+A match score contains:
+
+\begin{itemize}
+    \item home-team goals;
+    \item away-team goals.
+\end{itemize}
+
+The SQL schema requires non-negative scores.
+
+\subsection{Standings}
+
+The frontend and schema contain support for tournament standings.
+The ranking data structure contains:
+
+\begin{itemize}
+    \item position;
+    \item team name;
+    \item matches played;
+    \item goals scored;
+    \item goals conceded;
+    \item points.
+\end{itemize}
+
+A complete backend ranking endpoint is not currently present, so the
+standings integration should be completed before relying on it as a
+fully supported API feature.
+
+% ============================================================
+% 13. AUTHENTICATION
+% ============================================================
+
+\section{Authentication and Authorization}
+
+\subsection{Token Verification}
+
+The authentication helper is located in:
+
+\begin{lstlisting}
+backend/app/auth.py
+\end{lstlisting}
+
+It expects:
+
+\begin{lstlisting}
+X-API-Token: <API-TOKEN>
+\end{lstlisting}
+
+The token is compared with the value of the \texttt{API\_TOKEN}
+environment variable.
+
+\subsection{Current Integration Status}
+
+Although the authentication dependency exists, the current
+\texttt{main.py} router configuration does not attach
+\texttt{verify\_token} to the tournament, team, and match routes.
+
+Therefore the code contains the authentication mechanism, but the
+current routes are not consistently protected by it.
+
+This should be corrected before production deployment.
+
+\subsection{Recommended Authorization Model}
+
+A future implementation should explicitly define:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Operation} & \textbf{Viewer} & \textbf{Organizer}\\
+\midrule
+Read tournaments & Yes & Yes\\
+Read teams & Yes & Yes\\
+Read matches & Yes & Yes\\
+Read standings & Yes & Yes\\
+Create data & No & Yes\\
+Update data & No & Yes\\
+Delete data & No & Yes\\
+\bottomrule
+\end{tabular}
+\caption{Recommended authorization matrix}
+\end{table}
+
+% ============================================================
+% 14. ERROR HANDLING
+% ============================================================
+
+\section{Error Handling}
+
+The backend should use standard HTTP status codes.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{cl}
+\toprule
+\textbf{Status} & \textbf{Meaning}\\
+\midrule
+200 & Successful request\\
+201 & Resource successfully created\\
+400 & Invalid request\\
+401 & Unauthorized\\
+404 & Resource not found\\
+409 & Resource or database conflict\\
+500 & Internal server error\\
+\bottomrule
+\end{tabular}
+\caption{Recommended HTTP status codes}
+\end{table}
+
+The exact response behavior should be verified when new endpoints are
+implemented.
+
+% ============================================================
+% 15. DATABASE INTEGRITY
+% ============================================================
+
+\section{Database Integrity}
+
+The database schema contains several important integrity rules.
+
+\subsection{Primary Keys}
+
+All principal tables use identity-based integer primary keys, while
+\texttt{team\_tournaments} uses a composite primary key.
+
+\subsection{Unique Constraints}
+
+The schema enforces uniqueness for:
+
+\begin{itemize}
+    \item usernames;
+    \item email addresses;
+    \item team names.
+\end{itemize}
+
+\subsection{Foreign Keys}
+
+Important foreign key relationships include:
+
+\begin{itemize}
+    \item tournaments $\rightarrow$ users;
+    \item players $\rightarrow$ teams;
+    \item matches $\rightarrow$ tournaments;
+    \item matches $\rightarrow$ home teams;
+    \item matches $\rightarrow$ away teams;
+    \item team/tournament associations $\rightarrow$ teams;
+    \item team/tournament associations $\rightarrow$ tournaments.
+\end{itemize}
+
+\subsection{Match Integrity}
+
+The database prevents a match from using the same team for both home
+and away positions.
+
+\begin{lstlisting}[language=SQL]
+CHECK (home_team_id != away_team_id)
+\end{lstlisting}
+
+This is preferable to relying only on frontend validation.
+
+% ============================================================
+% 16. TESTING
+% ============================================================
+
+\section{Testing}
+
+\subsection{Current Testing Status}
+
+No dedicated automated test suite was found in the inspected project
+source. Consequently, tests should be added before major extensions
+or production deployment.
+
+\subsection{Recommended Unit Tests}
+
+Unit tests should cover:
+
+\begin{itemize}
+    \item tournament validation;
+    \item team validation;
+    \item match validation;
+    \item score validation;
+    \item ranking calculations.
+\end{itemize}
+
+Example:
+
+\begin{lstlisting}[language=python]
+def test_goal_difference():
+    assert calculate_goal_difference(3, 1) == 2
+\end{lstlisting}
+
+\subsection{API Tests}
+
+API tests should verify:
+
+\begin{itemize}
+    \item successful requests;
+    \item invalid requests;
+    \item missing resources;
+    \item score updates;
+    \item database conflicts;
+    \item authentication once it is attached to the routes.
+\end{itemize}
+
+\subsection{Database Tests}
+
+Database tests should verify:
+
+\begin{itemize}
+    \item primary keys;
+    \item foreign keys;
+    \item uniqueness constraints;
+    \item score checks;
+    \item home/away team checks;
+    \item deletion behavior.
+\end{itemize}
+
+% ============================================================
+% 17. DEVELOPMENT WORKFLOW
+% ============================================================
+
+\section{Development Workflow}
+
+A recommended development workflow is:
+
+\begin{enumerate}
+    \item Pull the latest repository version.
+    \item Create a dedicated feature branch.
+    \item Modify the database schema if necessary.
+    \item Update SQLAlchemy models.
+    \item Update Pydantic schemas.
+    \item Implement or modify API routes.
+    \item Update the frontend API client.
+    \item Update the Tkinter interface.
+    \item Run tests.
+    \item Verify database integrity.
+    \item Update this manual.
+    \item Commit the changes.
+\end{enumerate}
+
+Example:
+
+\begin{lstlisting}[language=bash]
+git checkout -b feature/new-functionality
+
+# Implement changes
+
+git add .
+git commit -m "Add new functionality"
+git push origin feature/new-functionality
+\end{lstlisting}
+
+% ============================================================
+% 18. TROUBLESHOOTING
+% ============================================================
+
+\section{Troubleshooting}
+
+\subsection{Backend Does Not Start}
+
+First verify the environment variables and database connection.
+
+Then inspect Docker logs if Docker is being used:
+
+\begin{lstlisting}[language=bash]
+docker compose ps
+docker compose logs
+\end{lstlisting}
+
+\subsection{Database Connection Fails}
+
+Check:
+
+\begin{itemize}
+    \item PostgreSQL is running;
+    \item the database exists;
+    \item the username is correct;
+    \item the password is correct;
+    \item port 5432 is reachable;
+    \item \texttt{DATABASE\_URL} is correctly configured.
+\end{itemize}
+
+\subsection{Frontend Cannot Connect}
+
+Verify that the backend is reachable at:
+
+\begin{lstlisting}
+http://localhost:8000
+\end{lstlisting}
+
+Then check the API URL configured in the connection dialog.
+
+\subsection{Authentication Fails}
+
+The current authentication implementation expects:
+
+\begin{lstlisting}
+X-API-Token
+\end{lstlisting}
+
+Make sure the frontend and backend use the same token and header name.
+
+% ============================================================
+% 19. MAINTENANCE AND TECHNICAL DEBT
+% ============================================================
+
+\section{Known Issues and Technical Debt}
+\label{sec:technical-debt}
+
+The following items should be considered when maintaining the project.
+
+\subsection{Authentication Header Inconsistency}
+
+The source code uses \texttt{X-API-Token}, while some older
+documentation refers to \texttt{X-API-Key}. The implementation and
+documentation should use one name consistently.
+
+\subsection{Authentication Dependency Not Attached}
+
+The authentication helper exists but is not currently applied to the
+main CRUD routers. This should be fixed before deployment.
+
+\subsection{Ranking Endpoint Missing}
+
+The frontend expects a ranking endpoint, but the backend does not
+currently expose the corresponding route.
+
+\subsection{Frontend Ranking Function Name}
+
+The dashboard checks for a function named
+\texttt{get\_tournament\_ranking}, while the API client contains
+\texttt{get\_standings}. These names should be unified.
+
+\subsection{Duplicate API Function}
+
+\texttt{create\_match\_scheduled} is defined more than once in the
+frontend API client. Duplicate definitions should be removed.
+
+\subsection{Seed Role Inconsistency}
+
+The SQL schema restricts user roles to:
+
+\begin{lstlisting}
+organizer
+player
+viewer
+\end{lstlisting}
+
+The Python seed script currently uses \texttt{admin} for a test user.
+This conflicts with the SQL role constraint and should be corrected.
+
+\subsection{Docker Compose Database}
+
+The current Compose configuration does not provide a PostgreSQL
+service, so the database setup is not fully self-contained.
+
+\subsection{Secrets}
+
+A database password and development credentials are present in the
+repository archive. Real credentials should be rotated and moved to
+environment-specific secret storage.
+
+% ============================================================
+% 20. EXTENDING THE APPLICATION
+% ============================================================
+
+\section{Extending the Application}
+
+Potential future extensions include:
+
+\begin{itemize}
+    \item complete player management;
+    \item cards and disciplinary events;
+    \item stadium management;
+    \item player statistics;
+    \item tournament groups;
+    \item notifications;
+    \item multiple competition formats;
+    \item a complete ranking API.
+\end{itemize}
+
+\subsection{Adding a New Feature}
+
+A database-backed feature should normally follow this sequence:
+
+\begin{enumerate}
+    \item Modify the SQL schema if necessary.
+    \item Update the SQLAlchemy model.
+    \item Update Pydantic schemas.
+    \item Implement business logic.
+    \item Add or modify REST endpoints.
+    \item Update the frontend API client.
+    \item Update the Tkinter interface.
+    \item Add tests.
+    \item Update the developer manual.
+\end{enumerate}
+
+% ============================================================
+% 21. DEPLOYMENT
+% ============================================================
+
+\section{Deployment}
+
+\subsection{Development Environment}
+
+The intended development environment consists of:
+
+\begin{itemize}
+    \item PostgreSQL;
+    \item the FastAPI backend;
+    \item the Tkinter frontend;
+    \item optional Docker containers.
+\end{itemize}
+
+\subsection{Production Considerations}
+
+Before production deployment, the following items should be addressed:
+
+\begin{itemize}
+    \item protect all write endpoints;
+    \item replace development API tokens;
+    \item remove real secrets from source control;
+    \item restrict CORS origins;
+    \item provide a managed PostgreSQL instance;
+    \item implement automated tests;
+    \item implement database migrations;
+    \item define backups;
+    \item define monitoring and logging.
+\end{itemize}
+
+% ============================================================
+% 22. APPENDIX
+% ============================================================
+
+\section{Appendix}
+
+\subsection{Useful Commands}
+
+\begin{longtable}{p{8cm}p{6cm}}
+\toprule
+\textbf{Command} & \textbf{Purpose}\\
+\midrule
+\endhead
+\texttt{docker compose up --build -d} & Start containers\\
+\texttt{docker compose ps} & Show running containers\\
+\texttt{docker compose logs} & Show service logs\\
+\texttt{docker compose down} & Stop containers\\
+\texttt{python3 -m venv venv} & Create Python virtual environment\\
+\texttt{pip install -r requirements.txt} & Install Python dependencies\\
+\bottomrule
+\end{longtable}
+
+\subsection{Default Development Configuration}
+
+\begin{longtable}{p{6cm}p{8cm}}
+\toprule
+\textbf{Parameter} & \textbf{Value}\\
+\midrule
+\endhead
+API URL & \texttt{http://localhost:8000}\\
+API documentation & \texttt{http://localhost:8000/docs}\\
+Authentication header & \texttt{X-API-Token}\\
+Database & PostgreSQL\\
+Backend port & 8000\\
+\bottomrule
+\end{longtable}
+
+\subsection{Compiling this Manual}
+
+With a LaTeX installation, run twice:
+
+\begin{lstlisting}[language=bash]
+pdflatex DEVELOPER_MANUAL.tex
+pdflatex DEVELOPER_MANUAL.tex
+\end{lstlisting}
+
+The second compilation updates the table of contents and references.
+
+With VS Code, the LaTeX Workshop extension can be used to build the
+document automatically.
+
+% ============================================================
+% END
+% ============================================================
+
+\end{document}

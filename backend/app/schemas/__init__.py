@@ -68,8 +68,8 @@ class Player(PlayerBase):
 # --- Match Schemas ---
 class MatchBase(BaseModel):
     match_date: date
-    home_score: Optional[int] = 0
-    away_score: Optional[int] = 0
+    home_score: Optional[int] = None
+    away_score: Optional[int] = None
     tournament_id: int
     home_team_id: int
     away_team_id: int

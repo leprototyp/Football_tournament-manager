@@ -406,11 +406,35 @@ class TournamentApp(tk.Tk):
             self.tree_tournaments.column(col, anchor="center")
         self.tree_tournaments.pack(fill="both", expand=True)
 
+    
+    def delete_selected_team(self):
+        selected_item = self.tree_teams.selection()
+        if not selected_item:
+            messagebox.showwarning("Warning", "Please select a team to delete.")
+            return
+        item_data = self.tree_teams.item(selected_item)
+        values = item_data.get("values", [])
+        if not values:
+            return
+        team_id = values[0]
+        if messagebox.askyesno("Confirmation", "Are you sure you want to delete this team?"):
+            try:
+                response = requests.delete(f"http://localhost:8000/teams/{team_id}")
+                if response.status_code in [200, 204]:
+                    messagebox.showinfo("Success", "Team deleted successfully.")
+                    self.refresh_all()
+                else:
+                    messagebox.showerror("Error", f"Server error: {response.status_code}")
+            except requests.exceptions.ConnectionError:
+                messagebox.showerror("Error", "Unable to connect to the FastAPI server.")
+
+
     def setup_teams_tab(self):
         if self.is_organizer:
             top_bar = ttk.Frame(self.tab_teams)
             top_bar.pack(fill="x", pady=(0, 10))
-            ttk.Button(top_bar, text="+ Add Team", command=lambda: CreateTeamForm(self, self.refresh_all)).pack(side="left")
+            ttk.Button(top_bar, text="+ Add Team", command=lambda: CreateTeamForm(self, self.refresh_all)).pack(side="left", padx=(0, 5))
+            ttk.Button(top_bar, text="Delete", command=self.delete_selected_team).pack(side="left")
 
         self.tree_teams = ttk.Treeview(self.tab_teams, columns=("ID", "Name", "Coach"), show="headings")
         for col, h in [("ID", "ID"), ("Name", "Team Name"), ("Coach", "Coach / Manager")]:

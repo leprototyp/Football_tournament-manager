@@ -41,3 +41,19 @@ def create_team(data: TeamCreate, db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/{team_id}", status_code=204)
+def delete_team(team_id: int, db: Session = Depends(get_db)):
+    t = db.query(models.Team).filter(models.Team.team_id == team_id).first()
+    if not t:
+        raise HTTPException(status_code=404, detail="Team not found")
+    
+    # Supprime ou détache les matchs impliquant cette équipe pour éviter les erreurs de contrainte
+    db.query(models.Match).filter(
+        (models.Match.home_team_id == team_id) | (models.Match.away_team_id == team_id)
+    ).delete(synchronize_session=False)
+    
+    db.delete(t)
+    db.commit()
+    return None

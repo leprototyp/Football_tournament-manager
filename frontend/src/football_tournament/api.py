@@ -96,7 +96,7 @@ def update_score(match_id: int, home_score: int, away_score: int):
         "home_score": home_score,
         "away_score": away_score
     }
-    res = requests.put(f"{API_URL}/matches/{match_id}", json=payload, headers=get_headers())
+    res = requests.put(f"{API_URL}/matches/{match_id}/score", json=payload, headers=get_headers())
     res.raise_for_status()
     return res.json()
 

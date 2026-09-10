@@ -1,0 +1,9 @@
+services:
+  backend:
+    build: ./backend
+    container_name: football_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    restart: always

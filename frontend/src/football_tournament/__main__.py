@@ -534,7 +534,8 @@ class TournamentApp(tk.Tk):
                 a_score = m.get('away_score', '-')
                 score = f"{h_score if h_score is not None else '-'} - {a_score if a_score is not None else '-'}"
                 
-                self.tree_matches.insert("", "end", values=(mid, mdate, home_name, score, away_name))
+                referee = m.get('referee') or 'N/A'
+                self.tree_matches.insert('', 'end', values=(mid, mdate, home_name, score, away_name, referee))
         except Exception as e:
             print("Erreur filtre matches :", e)
 
@@ -840,7 +841,8 @@ if __name__ == "__main__":
                 a_score = m.get('away_score', '-')
                 score = f"{h_score if h_score is not None else '-'} - {a_score if a_score is not None else '-'}"
                 
-                self.tree_matches.insert("", "end", values=(mid, mdate, home_name, score, away_name))
+                referee = m.get('referee') or 'N/A'
+                self.tree_matches.insert('', 'end', values=(mid, mdate, home_name, score, away_name, referee))
         except Exception as e:
             print("Erreur filtre matches :", e)
 

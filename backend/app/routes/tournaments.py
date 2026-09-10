@@ -63,3 +63,14 @@ def create_tournament(tournament: dict, db: Session = Depends(get_db)):
         "start_date": str(new_t.start_date),
         "end_date": str(new_t.end_date)
     }
+
+
+@router.delete("/{tournament_id}", status_code=204)
+def delete_tournament(tournament_id: int, db: Session = Depends(get_db)):
+    t = db.query(models.Tournament).filter(models.Tournament.tournament_id == tournament_id).first()
+    if not t:
+        raise HTTPException(status_code=404, detail="Tournament not found")
+    db.query(models.Match).filter(models.Match.tournament_id == tournament_id).delete()
+    db.delete(t)
+    db.commit()
+    return None

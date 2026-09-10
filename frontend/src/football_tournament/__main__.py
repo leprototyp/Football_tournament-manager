@@ -1,3 +1,4 @@
+import requests
 import tkinter as tk
 from tkinter import ttk, messagebox
 from football_tournament import api
@@ -369,11 +370,35 @@ class TournamentApp(tk.Tk):
 
         self.refresh_all()
 
+    
+    def delete_selected_tournament(self):
+        selected_item = self.tree_tournaments.selection()
+        if not selected_item:
+            messagebox.showwarning("Warning", "Please select a tournament to delete.")
+            return
+        item_data = self.tree_tournaments.item(selected_item)
+        values = item_data.get("values", [])
+        if not values:
+            return
+        tournament_id = values[0]
+        if messagebox.askyesno("Confirmation", "Are you sure you want to delete this tournament?"):
+            try:
+                response = requests.delete(f"http://localhost:8000/tournaments/{tournament_id}")
+                if response.status_code in [200, 204]:
+                    messagebox.showinfo("Success", "Tournament deleted successfully.")
+                    self.refresh_all()
+                else:
+                    messagebox.showerror("Error", f"Erreur serveur : {response.status_code}")
+            except requests.exceptions.ConnectionError:
+                messagebox.showerror("Error", "Unable to connect to the FastAPI server.")
+
+
     def setup_tournaments_tab(self):
         if self.is_organizer:
             top_bar = ttk.Frame(self.tab_tournaments)
             top_bar.pack(fill="x", pady=(0, 10))
-            ttk.Button(top_bar, text="+ New Tournament", command=lambda: CreateTournamentForm(self, self.refresh_all)).pack(side="left")
+            ttk.Button(top_bar, text="+ New Tournament", command=lambda: CreateTournamentForm(self, self.refresh_all)).pack(side="left", padx=(0, 5))
+            ttk.Button(top_bar, text="Delete", command=self.delete_selected_tournament).pack(side="left")
 
         self.tree_tournaments = ttk.Treeview(self.tab_tournaments, columns=("ID", "Name", "Start", "End"), show="headings")
         for col, h in [("ID", "ID"), ("Name", "Tournament Name"), ("Start", "Start Date"), ("End", "End Date")]:

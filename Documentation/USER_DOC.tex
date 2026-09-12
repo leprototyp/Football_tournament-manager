@@ -1,0 +1,747 @@
+\documentclass[12pt,a4paper]{article}
+
+% ---------------------------------------------------------
+% Packages
+% ---------------------------------------------------------
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{listings}
+
+% ---------------------------------------------------------
+% Page layout
+% ---------------------------------------------------------
+
+\geometry{
+a4paper,
+left=25mm,
+right=25mm,
+top=25mm,
+bottom=25mm
+}
+
+% ---------------------------------------------------------
+% Header and footer
+% ---------------------------------------------------------
+
+\pagestyle{fancy}
+\fancyhf{}
+
+\setlength{\headheight}{14.5pt}
+
+\fancyfoot[L]{%
+\footnotesize\ttfamily
+\href{mailto:rostand.assonfo-demaboi@thga.stud.de}
+{rostand.assonfo-demaboi@thga.stud.de}
+}
+
+\fancyfoot[C]{\footnotesize THGA Bochum}
+\fancyfoot[R]{\footnotesize\thepage}
+
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% ---------------------------------------------------------
+% Code listings
+% ---------------------------------------------------------
+
+\lstset{
+basicstyle=\ttfamily\small,
+frame=single,
+breaklines=true,
+columns=fullflexible,
+keepspaces=true
+}
+
+% ---------------------------------------------------------
+% Hyperlinks
+% ---------------------------------------------------------
+
+\hypersetup{
+colorlinks=true,
+linkcolor=black,
+urlcolor=blue,
+pdftitle={User Manual -- Football Tournament Management System},
+pdfauthor={Rostand Cedrix Assonfo Demaboi},
+hypertexnames=false
+}
+
+% ---------------------------------------------------------
+% Document
+% ---------------------------------------------------------
+
+\begin{document}
+
+% =========================================================
+% Title page
+% =========================================================
+
+\begin{titlepage}
+\centering
+
+\vspace*{2cm}
+
+{\Huge\bfseries
+User Manual\\[0.5cm]
+Football Tournament Management System
+}
+
+\vspace{2cm}
+
+{\Large
+Rostand Cedrix Assonfo Demaboi
+}
+
+\vspace{0.5cm}
+
+{\large
+Summer Term 2026
+}
+
+\vfill
+
+{\large
+Technische Hochschule Georg Agricola, Bochum
+}
+
+\vspace{0.5cm}
+
+{\large
+Module: Introduction to Database Management Systems
+}
+
+\vspace{0.5cm}
+
+{\large
+Dozent: Stephan Bökelmann
+}
+
+\vfill
+
+{\large
+\today
+}
+
+\end{titlepage}
+
+% =========================================================
+% Table of contents
+% =========================================================
+
+\pagenumbering{roman}
+
+\clearpage
+\tableofcontents
+\clearpage
+
+\pagenumbering{arabic}
+
+% =========================================================
+% 1 Introduction
+% =========================================================
+
+\section{Introduction and System Overview}
+
+The Football Tournament Management System is an application
+designed to organize, track, and administer football
+competitions.
+
+The system follows a decoupled architecture consisting of
+three main components:
+
+\begin{itemize}
+\item \textbf{Backend:} A REST API developed with FastAPI
+and connected to a relational database.
+
+\item \textbf{Frontend:} A desktop graphical interface
+developed with Python Tkinter for user interaction.
+
+\item \textbf{Orchestration:} Docker Compose is used to
+simplify deployment and ensure a reproducible runtime
+environment.
+\end{itemize}
+
+The application provides two main access modes.
+
+\subsection{Organizer Mode}
+
+Organizer Mode provides access to administrative operations.
+
+Authenticated organizers can create, modify, and delete
+tournaments, teams, and matches.
+
+Authentication is performed using an API token.
+
+\subsection{Viewer Mode}
+
+Viewer Mode provides read-only access to the application.
+
+Users can view tournaments, teams, matches, scores, and
+rankings without modifying the database.
+
+% =========================================================
+% 2 Backend Deployment
+% =========================================================
+
+\section{Backend Deployment and Launch}
+
+The backend server and database can be started using Docker
+Compose or the backend can be launched separately for
+development and testing.
+
+This section describes both methods.
+
+\subsection{Prerequisites}
+
+Before starting the application, make sure that the following
+software is installed:
+
+\begin{itemize}
+\item Docker
+\item Docker Compose
+\item Python 3
+\end{itemize}
+
+\subsection{Deployment Using Docker Compose}
+
+Open a terminal and navigate to the project root directory:
+
+\begin{lstlisting}
+cd ~/football-tournament-manager
+\end{lstlisting}
+
+Start the backend and database containers:
+
+\begin{lstlisting}
+docker compose up --build -d
+\end{lstlisting}
+
+The \texttt{--build} option ensures that the required Docker
+images are rebuilt when necessary, while \texttt{-d} starts
+the services in detached mode.
+
+Check the status of the containers with:
+
+\begin{lstlisting}
+docker compose ps
+\end{lstlisting}
+
+The containers should be displayed as running.
+
+The FastAPI backend is available on port:
+
+\begin{lstlisting}
+8000
+\end{lstlisting}
+
+The default local API URL is:
+
+\begin{lstlisting}
+http://localhost:8000
+\end{lstlisting}
+
+\subsection{Separate Backend and Frontend Launch}
+
+The application can also be started without using Docker
+Compose for the frontend.
+
+In this configuration, the backend is started in one terminal
+and the frontend is started in a second terminal.
+
+This method is useful for development and testing because the
+frontend and backend can be started and monitored independently.
+
+\subsubsection{Terminal 1 -- Start the Backend}
+
+Open the first terminal and navigate to the backend directory:
+
+\begin{lstlisting}
+cd ~/football-tournament-manager/backend
+\end{lstlisting}
+
+Activate the Python virtual environment if one is configured
+for the backend:
+
+\begin{lstlisting}
+source .venv/bin/activate
+\end{lstlisting}
+
+Start the FastAPI backend with:
+
+\begin{lstlisting}
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+\end{lstlisting}
+
+Keep this terminal open while using the application.
+
+The backend should then be available at:
+
+\begin{lstlisting}
+http://localhost:8000
+\end{lstlisting}
+
+\subsubsection{Terminal 2 -- Start the Frontend}
+
+Open a second terminal.
+
+Navigate to the frontend directory:
+
+\begin{lstlisting}
+cd ~/football-tournament-manager/frontend
+\end{lstlisting}
+
+Activate the frontend virtual environment:
+
+\begin{lstlisting}
+source .venv/bin/activate
+\end{lstlisting}
+
+Start the graphical application:
+
+\begin{lstlisting}
+python3 src/football_tournament/main.py
+\end{lstlisting}
+
+The frontend connects to the backend running in the first
+terminal.
+
+In the connection dialog, use:
+
+\begin{lstlisting}
+http://localhost:8000
+\end{lstlisting}
+
+For Organizer Mode, enter:
+
+\begin{lstlisting}
+mykey
+\end{lstlisting}
+
+For Viewer Mode, leave the API token empty or enter an
+incorrect token.
+
+\subsection{Difference Between the Two Launch Methods}
+
+There are two possible ways to run the application.
+
+With Docker Compose:
+
+\begin{lstlisting}
+docker compose up --build -d
+\end{lstlisting}
+
+Docker manages the backend and database services.
+
+With separate terminals, the backend and frontend are started
+independently.
+
+The separate method is particularly useful during development
+because changes to the Python backend or frontend can be tested
+directly.
+
+It is important to ensure that both launch methods use the same
+database configuration if identical initial data is expected.
+
+% =========================================================
+% 3 Frontend
+% =========================================================
+
+\section{Frontend Launch and Connection}
+
+Once the backend is running, the desktop frontend can be
+started.
+
+\subsection{Activating the Python Environment}
+
+Navigate to the frontend directory:
+
+\begin{lstlisting}
+cd ~/football-tournament-manager/frontend
+\end{lstlisting}
+
+The project uses a virtual environment named
+\texttt{.venv}. Activate it with:
+
+\begin{lstlisting}
+source .venv/bin/activate
+\end{lstlisting}
+
+Then start the application with:
+
+\begin{lstlisting}
+python3 src/football_tournament/main.py
+\end{lstlisting}
+
+\subsection{Startup Connection Dialog}
+
+When the application starts, a connection dialog is displayed.
+
+The dialog requests the following information:
+
+\begin{itemize}
+\item \textbf{API URL:} The address of the FastAPI backend.
+The default value is
+\texttt{http://localhost:8000}.
+
+\item \textbf{X-API-Token:} The authentication token used
+to access organizer operations.
+\end{itemize}
+
+\subsection{Viewer Mode}
+
+To access the application in read-only mode, leave the
+\texttt{X-API-Token} field empty or enter an incorrect API token.
+
+In both cases, the application starts in Viewer Mode.
+
+\subsection{Organizer Mode}
+
+To access administrative functions, enter the API token
+configured for the application.
+
+The API token used by the application is:
+
+\begin{lstlisting}
+mykey
+\end{lstlisting}
+
+Only the correct token allows access to Organizer Mode.
+
+If the token is empty or incorrect, the application connects
+in Viewer Mode.
+
+% =========================================================
+% 4 Interface
+% =========================================================
+
+\section{Interface Navigation and Usage}
+
+The main interface is organized as a tabbed dashboard.
+
+The available sections allow users to inspect and manage the
+main entities of the football tournament system.
+
+\subsection{Tournaments Tab}
+
+The Tournaments tab displays the registered football
+competitions.
+
+Users can view information such as:
+
+\begin{itemize}
+\item Tournament name
+\item Start date
+\item End date
+\item Current status
+\end{itemize}
+
+Organizers can create, modify, or delete tournaments when
+authenticated with a valid API token.
+
+\subsection{Teams Tab}
+
+The Teams tab displays the participating teams.
+
+For each team, the interface provides information such as:
+
+\begin{itemize}
+\item Unique team identifier
+\item Team name
+\item Coach or manager name
+\end{itemize}
+
+Organizers can create, update, and delete teams.
+
+The current application interface does not provide a dedicated
+player-management workflow in this section. Therefore, players
+should not be considered a directly managed feature of the
+current graphical interface.
+
+\subsection{Matches Tab}
+
+The Matches tab displays the fixtures registered in the system.
+
+A tournament selector at the top of the tab allows users to
+filter the displayed matches.
+
+The available options include:
+
+\begin{itemize}
+\item A specific tournament
+\item All tournaments
+\end{itemize}
+
+The match table displays information such as:
+
+\begin{itemize}
+\item Match date
+\item Home team
+\item Away team
+\item Score
+\item Referee
+\end{itemize}
+
+For a match that has not yet received a score, the score is
+displayed using a dash (\texttt{-}).
+
+Validated scores are displayed using the
+Home--Away format.
+
+\subsection{Standings Tab}
+
+The Standings tab displays the current ranking of teams in a
+tournament.
+
+The ranking is calculated dynamically from the recorded match
+results.
+
+The displayed statistics include:
+
+\begin{itemize}
+\item Points
+\item Wins
+\item Draws
+\item Losses
+\item Goals scored
+\item Goals conceded
+\item Goal difference
+\end{itemize}
+
+The standings therefore reflect the current results stored in
+the database.
+
+% =========================================================
+% 5 Administrative Operations
+% =========================================================
+
+\section{Administrative Operations}
+
+Administrative operations are available to users authenticated
+in Organizer Mode.
+
+The following operations can be performed from the graphical
+interface.
+
+\subsection{Scheduling a Match}
+
+To create a new match:
+
+\begin{enumerate}
+\item Open the \textbf{Matches} tab.
+\item Click the \textbf{+ Schedule Match} button.
+\item Select the tournament.
+\item Select the home team.
+\item Select the away team.
+\item Select or enter the match date.
+\item Enter the referee information if required.
+\item Confirm the operation using the
+\textbf{SAVE MATCH} button.
+\end{enumerate}
+
+The new match is then stored in the database and becomes
+available in the Matches tab.
+
+\subsection{Updating a Match Score}
+
+To update the score of an existing match:
+
+\begin{enumerate}
+\item Open the \textbf{Matches} tab.
+\item Select the desired match.
+\item Click \textbf{Update Score}.
+\item Enter the goals scored by the home team.
+\item Enter the goals scored by the away team.
+\item Confirm the modification.
+\end{enumerate}
+
+The new result is stored in the database.
+
+The standings are subsequently recalculated from the updated
+match results.
+
+\subsection{Deleting Data}
+
+Organizers can delete obsolete teams or matches using the
+corresponding \textbf{Delete} operation.
+
+Deletion is subject to the database's referential integrity
+constraints.
+
+If an object is referenced by another database object, the
+database may prevent the deletion in order to preserve data
+consistency.
+
+\subsection{Refreshing the Data}
+
+The application provides a \textbf{Refresh Data} function.
+
+This operation retrieves the current data from the backend API
+and updates the local graphical display.
+
+It is particularly useful when data has been modified externally
+or by another client.
+
+\subsection{Logout and Switching User Mode}
+
+To terminate the current session, close the application or use
+the available disconnect/logout functionality in the connection
+panel.
+
+When the application is started again, the connection dialog is
+displayed and the user can choose whether to connect in Viewer
+Mode or Organizer Mode.
+
+% =========================================================
+% 6 Typical Usage Workflow
+% =========================================================
+
+\section{Typical Usage Workflow}
+
+A typical tournament-management workflow can be performed in the
+following order:
+
+\begin{enumerate}
+\item Start the backend and database using Docker Compose,
+or start the backend separately in the first terminal.
+\item Verify that the backend is running.
+\item Open a second terminal and start the frontend
+application.
+\item Enter the backend API URL.
+\item Enter the API token to access Organizer Mode, or leave
+it empty for Viewer Mode.
+\item Create a tournament.
+\item Create the participating teams.
+\item Schedule the matches between the teams.
+\item Enter the results after matches have been played.
+\item Open the Standings tab to view the updated ranking.
+\item Use Refresh Data whenever information needs to be
+synchronized with the backend.
+\end{enumerate}
+
+This workflow allows an organizer to manage a complete football
+competition from its creation through the recording of match
+results and rankings.
+
+% =========================================================
+% 7 Troubleshooting
+% =========================================================
+
+\section{Troubleshooting}
+
+\subsection{Docker Containers Are Not Running}
+
+If the containers are not running, execute:
+
+\begin{lstlisting}
+docker compose ps
+\end{lstlisting}
+
+To inspect the container logs, use:
+
+\begin{lstlisting}
+docker compose logs
+\end{lstlisting}
+
+The backend can also be restarted with:
+
+\begin{lstlisting}
+docker compose up --build -d
+\end{lstlisting}
+
+\subsection{Frontend Cannot Connect to the Backend}
+
+First verify that the backend is running.
+
+The default API address is:
+
+\begin{lstlisting}
+http://localhost:8000
+\end{lstlisting}
+
+Also verify that the API token is correct when using Organizer
+Mode.
+
+\subsection{Backend Started Separately}
+
+If the backend is started manually, open the first terminal and
+execute:
+
+\begin{lstlisting}
+cd ~/football-tournament-manager/backend
+\end{lstlisting}
+
+Then start the FastAPI application:
+
+\begin{lstlisting}
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+\end{lstlisting}
+
+Keep this terminal running.
+
+Open a second terminal and execute:
+
+\begin{lstlisting}
+cd ~/football-tournament-manager/frontend
+source .venv/bin/activate
+python3 src/football_tournament/main.py
+\end{lstlisting}
+
+The frontend must connect to:
+
+\begin{lstlisting}
+http://localhost:8000
+\end{lstlisting}
+
+\subsection{Virtual Environment Cannot Be Activated}
+
+Make sure that you are inside the frontend directory:
+
+\begin{lstlisting}
+cd ~/football-tournament-manager/frontend
+\end{lstlisting}
+
+Then activate the correct environment:
+
+\begin{lstlisting}
+source .venv/bin/activate
+\end{lstlisting}
+
+If the virtual environment does not exist, it must be created
+according to the project's Python environment setup instructions.
+
+% =========================================================
+% 8 Conclusion
+% =========================================================
+
+\section{Conclusion}
+
+The Football Tournament Management System provides a complete
+interface for managing football tournaments, teams, matches,
+scores, and standings.
+
+The system separates the graphical frontend from the REST API
+and database layer. Docker Compose provides a reproducible
+environment for running the backend and database.
+
+The application can also be launched separately, with the
+backend running in one terminal and the frontend running in a
+second terminal.
+
+Viewer Mode allows participants to inspect tournament
+information, while Organizer Mode provides the administrative
+operations required to maintain the competition.
+
+For development and deployment, the most important components
+are the Docker Compose environment, the FastAPI backend, the
+Python virtual environment, and the Tkinter frontend.
+
+\end{document}

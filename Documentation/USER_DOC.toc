@@ -1,0 +1,33 @@
+\contentsline {section}{\numberline {1}Introduction and System Overview}{1}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Organizer Mode}{1}{subsection.2}%
+\contentsline {subsection}{\numberline {1.2}Viewer Mode}{1}{subsection.3}%
+\contentsline {section}{\numberline {2}Backend Deployment and Launch}{1}{section.4}%
+\contentsline {subsection}{\numberline {2.1}Prerequisites}{1}{subsection.5}%
+\contentsline {subsection}{\numberline {2.2}Deployment Using Docker Compose}{2}{subsection.6}%
+\contentsline {subsection}{\numberline {2.3}Separate Backend and Frontend Launch}{2}{subsection.17}%
+\contentsline {subsubsection}{\numberline {2.3.1}Terminal 1 -- Start the Backend}{2}{subsubsection.18}%
+\contentsline {subsubsection}{\numberline {2.3.2}Terminal 2 -- Start the Frontend}{3}{subsubsection.27}%
+\contentsline {subsection}{\numberline {2.4}Difference Between the Two Launch Methods}{3}{subsection.38}%
+\contentsline {section}{\numberline {3}Frontend Launch and Connection}{3}{section.41}%
+\contentsline {subsection}{\numberline {3.1}Activating the Python Environment}{3}{subsection.42}%
+\contentsline {subsection}{\numberline {3.2}Startup Connection Dialog}{4}{subsection.49}%
+\contentsline {subsection}{\numberline {3.3}Viewer Mode}{4}{subsection.50}%
+\contentsline {subsection}{\numberline {3.4}Organizer Mode}{4}{subsection.51}%
+\contentsline {section}{\numberline {4}Interface Navigation and Usage}{4}{section.54}%
+\contentsline {subsection}{\numberline {4.1}Tournaments Tab}{4}{subsection.55}%
+\contentsline {subsection}{\numberline {4.2}Teams Tab}{5}{subsection.56}%
+\contentsline {subsection}{\numberline {4.3}Matches Tab}{5}{subsection.57}%
+\contentsline {subsection}{\numberline {4.4}Standings Tab}{5}{subsection.58}%
+\contentsline {section}{\numberline {5}Administrative Operations}{6}{section.59}%
+\contentsline {subsection}{\numberline {5.1}Scheduling a Match}{6}{subsection.60}%
+\contentsline {subsection}{\numberline {5.2}Updating a Match Score}{6}{subsection.69}%
+\contentsline {subsection}{\numberline {5.3}Deleting Data}{7}{subsection.76}%
+\contentsline {subsection}{\numberline {5.4}Refreshing the Data}{7}{subsection.77}%
+\contentsline {subsection}{\numberline {5.5}Logout and Switching User Mode}{7}{subsection.78}%
+\contentsline {section}{\numberline {6}Typical Usage Workflow}{7}{section.79}%
+\contentsline {section}{\numberline {7}Troubleshooting}{8}{section.91}%
+\contentsline {subsection}{\numberline {7.1}Docker Containers Are Not Running}{8}{subsection.92}%
+\contentsline {subsection}{\numberline {7.2}Frontend Cannot Connect to the Backend}{8}{subsection.99}%
+\contentsline {subsection}{\numberline {7.3}Backend Started Separately}{8}{subsection.102}%
+\contentsline {subsection}{\numberline {7.4}Virtual Environment Cannot Be Activated}{8}{subsection.113}%
+\contentsline {section}{\numberline {8}Conclusion}{9}{section.118}%
